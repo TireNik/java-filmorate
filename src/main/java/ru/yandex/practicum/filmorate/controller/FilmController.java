@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -95,7 +96,8 @@ public class FilmController {
 
     private boolean releaseLimit(Instant instant) {
         LocalDate limit = LocalDate.of(1895, 12, 28);
-        return instant.isBefore(Instant.from(limit));
+        Instant limitInstant = limit.atStartOfDay(ZoneId.of("UTC")).toInstant();
+        return instant.isBefore(limitInstant);
     }
 
 }

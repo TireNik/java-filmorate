@@ -7,9 +7,6 @@ import lombok.Setter;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * Film.
- */
 @Data
 public class Film {
     private Long id;
