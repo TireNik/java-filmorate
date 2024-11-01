@@ -6,9 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,7 +75,7 @@ public class FilmController {
             throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
         }
 
-        if (film.getDuration().isNegative()) {
+        if (film.getDuration() <= 0) {
             logger.error("Ошибка валидации: Продолжительность фильма должна быть положительным числом.");
             throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
@@ -94,10 +92,9 @@ public class FilmController {
         return ++currentMaxId;
     }
 
-    private boolean releaseLimit(Instant instant) {
+    private boolean releaseLimit(LocalDate date) {
         LocalDate limit = LocalDate.of(1895, 12, 28);
-        Instant limitInstant = limit.atStartOfDay(ZoneId.of("UTC")).toInstant();
-        return instant.isBefore(limitInstant);
+        return date.isBefore(limit);
     }
 
 }

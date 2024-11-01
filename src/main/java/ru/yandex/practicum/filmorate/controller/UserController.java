@@ -80,8 +80,7 @@ public class UserController {
         }
 
         LocalDate today = LocalDate.now();
-        LocalDate birthday = user.getBirthday().atZone(ZoneId.systemDefault()).toLocalDate();
-        if (birthday.isAfter(today)) {
+        if (user.getBirthday().isAfter(today)) {
             log.error("Дата рождения {} находится в будущем", user.getBirthday());
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
