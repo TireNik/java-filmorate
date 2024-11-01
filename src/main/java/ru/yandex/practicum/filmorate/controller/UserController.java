@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -7,7 +8,6 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,9 +26,8 @@ public class UserController {
     }
 
     @PostMapping
-    public User addUser(@RequestBody User user) {
+    public User addUser(@Valid @RequestBody User user) {
         log.info("Добавление пользователя: {}", user);
-        validation(user);
 
         if (user.getName() == null || user.getName().isBlank()) {
             log.info("Имя пользователя пустое, используем логин в качестве имени: {}", user.getLogin());
@@ -42,7 +41,7 @@ public class UserController {
     }
 
     @PutMapping
-    public User updateUser(@RequestBody User newUser) {
+    public User updateUser(@Valid @RequestBody User newUser) {
         log.info("Обновление данных пользователя: {}", newUser);
 
         if (newUser.getId() == null) {
@@ -54,8 +53,6 @@ public class UserController {
             throw new ValidationException("Пользователь с указанным id не найден");
         }
 
-        validation(newUser);
-
         User oldUser = users.get(newUser.getId());
         oldUser.setName(newUser.getName());
         oldUser.setBirthday(newUser.getBirthday());
@@ -64,28 +61,6 @@ public class UserController {
 
         log.info("Пользователь с ID {} успешно обновлён", newUser.getId());
         return oldUser;
-    }
-
-    private void validation(User user) {
-        log.info("Валидация пользователя: {}", user);
-
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            log.error("Электронная почта пользователя не может быть пустой");
-            throw new ValidationException("Электронная почта не может быть пустой");
-        }
-
-        if (!user.getEmail().contains("@")) {
-            log.error("Электронная почта {} должна содержать символ '@'", user.getEmail());
-            throw new ValidationException("Электронная почта должна содержать символ @");
-        }
-
-        LocalDate today = LocalDate.now();
-        if (user.getBirthday().isAfter(today)) {
-            log.error("Дата рождения {} находится в будущем", user.getBirthday());
-            throw new ValidationException("Дата рождения не может быть в будущем");
-        }
-
-        log.info("Валидация пользователя пройдена успешно: {}", user);
     }
 
     private long getNextId() {
