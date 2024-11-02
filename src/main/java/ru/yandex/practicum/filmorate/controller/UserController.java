@@ -28,11 +28,7 @@ public class UserController {
     @PostMapping
     public User addUser(@Valid @RequestBody User user) {
         log.info("Добавление пользователя: {}", user);
-
-        if (user.getName() == null || user.getName().isBlank()) {
-            log.info("Имя пользователя пустое, используем логин в качестве имени: {}", user.getLogin());
-            user.setName(user.getLogin());
-        }
+        nameValid(user);
 
         user.setId(getNextId());
         users.put(user.getId(), user);
@@ -44,6 +40,7 @@ public class UserController {
     public User updateUser(@Valid @RequestBody User newUser) {
         log.info("Обновление данных пользователя: {}", newUser);
 
+        nameValid(newUser);
         if (newUser.getId() == null) {
             log.error("Не указан ID пользователя при обновлении");
             throw new ValidationException("Id должен быть указан");
@@ -61,6 +58,13 @@ public class UserController {
 
         log.info("Пользователь с ID {} успешно обновлён", newUser.getId());
         return oldUser;
+    }
+
+    private void nameValid(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            log.info("Имя пользователя пустое, используем логин в качестве имени: {}", user.getLogin());
+            user.setName(user.getLogin());
+        }
     }
 
     private long getNextId() {
