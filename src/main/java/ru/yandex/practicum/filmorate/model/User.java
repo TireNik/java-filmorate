@@ -1,31 +1,33 @@
 package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.FieldDefaults;
 import ru.yandex.practicum.filmorate.validation.WithoutSpace;
 
 import java.time.LocalDate;
 
 @Data
 @Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
 
-    private Long id;
+    Long id;
 
-    @Email
-    @NotBlank
-    @NotNull
-    private String email;
+    @Email(message = "Электронная почта должна содержать символ @")
+    @NotBlank(message = "Электронная почта не может быть пустой")
+    String email;
 
-    @NotBlank
-    @NotNull
+    @NotBlank(message = "Логин не может быть пустым")
     @WithoutSpace
-    private String login;
+    String login;
 
-    private String name;
+    String name;
 
-    @PastOrPresent
+
+    @PastOrPresent(message = "Дата рождения не может быть в будущем")
     @NotNull
-    private LocalDate birthday;
+    LocalDate birthday;
 }

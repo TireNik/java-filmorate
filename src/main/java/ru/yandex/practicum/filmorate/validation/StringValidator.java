@@ -12,6 +12,6 @@ public final class StringValidator implements ConstraintValidator<WithoutSpace, 
 
     @Override
     public boolean isValid(String login, ConstraintValidatorContext constraintValidatorContext) {
-        return !login.contains(" ");
+        return login != null && !login.contains(" ");
     }
 }

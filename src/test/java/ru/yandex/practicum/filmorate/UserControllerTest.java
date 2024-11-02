@@ -19,6 +19,11 @@ public class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    private String createTestUserJson(String email, String login, String name, String birthday) {
+        return String.format("{\"email\":\"%s\", \"login\":\"%s\", \"name\":\"%s\", \"birthday\":\"%s\"}",
+                email, login, name, birthday);
+    }
+
     @Test
     public void addUser_ShouldFailOnEmptyRequest() throws Exception {
         mockMvc.perform(post("/users")
@@ -31,8 +36,8 @@ public class UserControllerTest {
     public void addUser_ShouldFailOnEmptyEmail() throws Exception {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"login\":\"testUser\", \"name\":\"Test User\"," +
-                                " \"birthday\":\"2000-01-01T00:00:00Z\"}"))
+                        .content(createTestUserJson("", "testUser", "Test User",
+                                "2000-01-01")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message",
                         containsString("Электронная почта не может быть пустой")));
@@ -42,8 +47,8 @@ public class UserControllerTest {
     public void addUser_ShouldFailOnInvalidEmail() throws Exception {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"invalidEmail\", \"login\":\"testUser\", \"name\":\"Test User\"," +
-                                " \"birthday\":\"2000-01-01T00:00:00Z\"}"))
+                        .content(createTestUserJson("invalidEmail", "testUser", "Test User",
+                                "2000-01-01")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message",
                         containsString("Электронная почта должна содержать символ @")));
@@ -53,8 +58,8 @@ public class UserControllerTest {
     public void addUser_ShouldFailOnFutureBirthday() throws Exception {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"test@example.com\", \"login\":\"testUser\", \"name\":\"Test User\"," +
-                                " \"birthday\":\"2099-01-01T00:00:00Z\"}"))
+                        .content(createTestUserJson("test@example.com", "testUser",
+                                "Test User", "2099-01-01")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message",
                         containsString("Дата рождения не может быть в будущем")));
@@ -64,22 +69,22 @@ public class UserControllerTest {
     public void addUser_ShouldReturnUserWithId() throws Exception {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"test@example.com\", \"login\":\"testUser\", \"name\":\"Test User\"," +
-                                " \"birthday\":\"2000-01-01T00:00:00Z\"}"))
+                        .content(createTestUserJson("test@example.com", "testUser",
+                                "Test User", "2000-01-01")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.email").value("test@example.com"))
                 .andExpect(jsonPath("$.login").value("testUser"))
                 .andExpect(jsonPath("$.name").value("Test User"))
-                .andExpect(jsonPath("$.birthday").value("2000-01-01T00:00:00Z"));
+                .andExpect(jsonPath("$.birthday").value("2000-01-01"));
     }
 
     @Test
     public void getUsers_ShouldReturnListOfUsers() throws Exception {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"test2@example.com\", \"login\":\"testUser2\", \"name\":\"Test User 2\"," +
-                                " \"birthday\":\"1999-01-01T00:00:00Z\"}"))
+                        .content(createTestUserJson("test2@example.com", "testUser2", "Test User 2",
+                                "1999-01-01")))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/users"))
@@ -90,21 +95,23 @@ public class UserControllerTest {
 
     @Test
     public void updateUser_ShouldReturnUpdatedUser() throws Exception {
+        // Сначала создаем пользователя
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"test@example.com\", \"login\":\"testUser\", \"name\":\"Test User\"," +
-                                " \"birthday\":\"2000-01-01T00:00:00Z\"}"))
+                        .content(createTestUserJson("test@example.com", "testUser", "Test User",
+                                "2000-01-01")))
                 .andExpect(status().isOk());
 
+        // Обновляем пользователя
         mockMvc.perform(put("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"id\":1, \"email\":\"updated@example.com\", \"login\":\"updatedUser\"," +
-                                " \"name\":\"Updated User\", \"birthday\":\"1995-01-01T00:00:00Z\"}"))
+                                " \"name\":\"Updated User\", \"birthday\":\"1995-01-01\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.email").value("updated@example.com"))
                 .andExpect(jsonPath("$.login").value("updatedUser"))
                 .andExpect(jsonPath("$.name").value("Updated User"))
-                .andExpect(jsonPath("$.birthday").value("1995-01-01T00:00:00Z"));
+                .andExpect(jsonPath("$.birthday").value("1995-01-01"));
     }
 }
