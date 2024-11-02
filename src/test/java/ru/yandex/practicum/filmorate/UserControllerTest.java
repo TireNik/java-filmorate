@@ -95,14 +95,12 @@ public class UserControllerTest {
 
     @Test
     public void updateUser_ShouldReturnUpdatedUser() throws Exception {
-        // Сначала создаем пользователя
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createTestUserJson("test@example.com", "testUser", "Test User",
                                 "2000-01-01")))
                 .andExpect(status().isOk());
 
-        // Обновляем пользователя
         mockMvc.perform(put("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"id\":1, \"email\":\"updated@example.com\", \"login\":\"updatedUser\"," +

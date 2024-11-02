@@ -113,14 +113,14 @@ public class FilmControllerTest {
     }
 
     @Test
-    public void updateFilm_ShouldReturnBadRequest_WhenFilmNotFound() throws Exception {
+    public void updateFilm_ShouldReturnNotFound_WhenFilmNotFound() throws Exception {
         Film nonExistentFilm = baseFilm.toBuilder().id(999L).build();
 
         mockMvc.perform(put("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nonExistentFilm)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Validation error"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Resource not found"))
                 .andExpect(jsonPath("$.message").value("Фильм с указанным id не найден"));
     }
 }
