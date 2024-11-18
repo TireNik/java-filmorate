@@ -6,10 +6,7 @@ import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -18,8 +15,18 @@ public class InMemoryUserStorage implements UserStorage{
     private final Map<Long, User> users = new HashMap<>();
 
     @Override
-    public Collection<User> getUser() {
+    public Collection<User> getUsers() {
+        log.debug("Получение списка всех пользователей. Текущее количество пользователей: {}", users.size());
         return users.values();
+    }
+
+    @Override
+    public User getUserById(Long id) {
+        return Optional.ofNullable(users.get(id))
+                .orElseThrow(() -> {
+                    log.error("Пользователь с id {} не найден", id);
+                    return new ResourceNotFoundException("Пользователь с id: " + id + " не найден");
+                });
     }
 
     @Override
@@ -27,7 +34,7 @@ public class InMemoryUserStorage implements UserStorage{
         nameValid(user);
         user.setId(getNextId());
         users.put(user.getId(), user);
-        log.debug("Пользователь добавлен в хранилище: ID = {}, Name = {}", user.getId(), user.getName());
+        log.info("Пользователь успешно добавлен: ID = {}, Name = {}", user.getId(), user.getName());
         return user;
     }
 

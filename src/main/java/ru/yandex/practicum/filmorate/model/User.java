@@ -8,6 +8,8 @@ import lombok.experimental.FieldDefaults;
 import ru.yandex.practicum.filmorate.validation.WithoutSpace;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Builder
@@ -26,8 +28,10 @@ public class User {
 
     String name;
 
-
     @PastOrPresent(message = "Дата рождения не может быть в будущем")
     @NotNull
     LocalDate birthday;
+
+    @Builder.Default
+    Set<Long> friends = new HashSet<>();
 }
