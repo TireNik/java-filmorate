@@ -24,6 +24,9 @@ public class FilmService {
 
     public void addLike(Long filmId, Long userId) {
         Film film = filmStorage.getFilmById(filmId);
+        if (film == null) {
+            throw new ResourceNotFoundException("Фильм с ID " + filmId + " не найден");
+        }
         likes.computeIfAbsent(filmId, k -> new HashSet<>());
 
         if (!likes.get(filmId).add(userId)) {
