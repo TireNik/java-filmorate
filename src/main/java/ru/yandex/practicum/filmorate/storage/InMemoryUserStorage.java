@@ -8,12 +8,12 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-@Component
 @Slf4j
-public class InMemoryUserStorage implements UserStorage{
+@Component
+public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Long, User> users = new HashMap<>();
 
@@ -25,6 +25,10 @@ public class InMemoryUserStorage implements UserStorage{
 
     @Override
     public User getUserById(Long id) {
+        if (id == null) {
+            log.error("ID пользователя не может быть null.");
+            throw new IllegalArgumentException("ID пользователя не может быть null.");
+        }
         return Optional.ofNullable(users.get(id))
                 .orElseThrow(() -> {
                     log.error("Пользователь с id {} не найден", id);
@@ -53,14 +57,11 @@ public class InMemoryUserStorage implements UserStorage{
             throw new ResourceNotFoundException("Пользователь с указанным id не найден");
         }
 
-        User oldUser = users.get(newUser.getId());
-        oldUser.setName(newUser.getName());
-        oldUser.setBirthday(newUser.getBirthday());
-        oldUser.setEmail(newUser.getEmail());
-        oldUser.setLogin(newUser.getLogin());
-        log.debug("Пользователь обнавлен в хранилище: ID = {}, Name = {}", oldUser.getId(), oldUser.getName());
+        users.replace(newUser.getId(), newUser);
 
-        return oldUser;
+        log.debug("Пользователь обнавлен в хранилище: ID = {}, Name = {}", newUser.getId(), newUser.getName());
+
+        return newUser;
     }
 
     private long getNextId() {
@@ -77,5 +78,9 @@ public class InMemoryUserStorage implements UserStorage{
             log.info("Имя пользователя пустое, используем логин в качестве имени: {}", user.getLogin());
             user.setName(user.getLogin());
         }
+        if (user.getLogin() == null || user.getLogin().contains(" ")) {
+            throw new ValidationException("Не может быть пустым и содержать пробелы");
+        }
     }
 }
+

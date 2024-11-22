@@ -2,17 +2,14 @@ package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
-import ru.yandex.practicum.filmorate.validation.WithoutSpace;
 
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
 @Data
-@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
 
@@ -23,7 +20,6 @@ public class User {
     String email;
 
     @NotBlank(message = "Логин не может быть пустым")
-    @WithoutSpace
     String login;
 
     String name;
@@ -32,6 +28,5 @@ public class User {
     @NotNull
     LocalDate birthday;
 
-    @Builder.Default
     Set<Long> friends = new HashSet<>();
 }

@@ -17,6 +17,14 @@ public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Long, Film> films = new HashMap<>();
 
     @Override
+    public Film getFilmById(Long id) {
+        if (!films.containsKey(id)) {
+            throw new ResourceNotFoundException("Фильм с данным id не найден");
+        }
+        return films.get(id);
+    }
+
+    @Override
     public Film addFilm(Film film) {
         film.setId(getNextId());
         films.put(film.getId(), film);
@@ -41,14 +49,10 @@ public class InMemoryFilmStorage implements FilmStorage {
             throw new ResourceNotFoundException("Фильм с указанным id не найден");
         }
 
-        Film oldFilm = films.get(newFilm.getId());
-        oldFilm.setName(newFilm.getName());
-        oldFilm.setDescription(newFilm.getDescription());
-        oldFilm.setDuration(newFilm.getDuration());
-        oldFilm.setReleaseDate(newFilm.getReleaseDate());
-        log.debug("Фильм обнавлен в хранилище: ID = {}, Name = {}", oldFilm.getId(), oldFilm.getName());
+        films.replace(newFilm.getId(), newFilm);
+        log.debug("Фильм обнавлен в хранилище: ID = {}, Name = {}", newFilm.getId(), newFilm.getName());
 
-        return oldFilm;
+        return newFilm;
     }
 
     private long getNextId() {

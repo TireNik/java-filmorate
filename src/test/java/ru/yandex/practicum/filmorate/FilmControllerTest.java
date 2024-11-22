@@ -12,10 +12,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -60,6 +58,7 @@ public class FilmControllerTest {
                 .andExpect(jsonPath("$.message").value("Название не может быть пустым"));
     }
 
+
     @Test
     public void addFilm_ShouldReturnBadRequest_WhenDescriptionTooLong() throws Exception {
         Film filmWithLongDescription = baseFilm.toBuilder().description("A".repeat(201)).build();
@@ -69,8 +68,7 @@ public class FilmControllerTest {
                         .content(objectMapper.writeValueAsString(filmWithLongDescription)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Validation error"))
-                .andExpect(jsonPath("$.message")
-                        .value("Максимальная длина описания — 200 символов"));
+                .andExpect(jsonPath("$.message").value("Максимальная длина описания — 200 символов"));
     }
 
     @Test
@@ -122,5 +120,19 @@ public class FilmControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Resource not found"))
                 .andExpect(jsonPath("$.message").value("Фильм с указанным id не найден"));
+    }
+
+    @Test
+    public void addLike_ShouldReturnOk_WhenFilmAndUserExist() throws Exception {
+        mockMvc.perform(put("/films/1/like/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void addLike_ShouldReturnNotFound_WhenFilmDoesNotExist() throws Exception {
+        mockMvc.perform(put("/films/999/like/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Resource not found"))
+                .andExpect(jsonPath("$.message").value("Фильм с данным id не найден"));
     }
 }
