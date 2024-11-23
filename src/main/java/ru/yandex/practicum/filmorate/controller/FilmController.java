@@ -1,13 +1,12 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,49 +15,45 @@ import java.util.List;
 @RequestMapping("/films")
 @Validated
 @Slf4j
+@RequiredArgsConstructor
 public class FilmController {
 
     private final FilmService filmService;
-    private final FilmStorage filmStorage;
-
-    @Autowired
-    public FilmController(FilmService filmService, FilmStorage filmStorage) {
-        this.filmService = filmService;
-        this.filmStorage = filmStorage;
-    }
 
     @GetMapping
     public Collection<Film> getFilms() {
         log.info("Запрос на получение всех фильмов.");
-        return filmStorage.getFilm();
+        return filmService.getFilms();
+    }
+
+    @GetMapping("/{id}")
+    public Film getFilm(@PathVariable long id) {
+        log.info("получение фильма по id {}", id);
+        return filmService.getFilm(id);
     }
 
     @PostMapping
     public Film addFilm(@Valid @RequestBody Film film) {
-        log.info("Добавление фильма: {}", film.getName());
-        Film saveFilm = filmStorage.addFilm(film);
         log.info("Фильм успешно добавлен с ID: {}", film.getId());
-        return saveFilm;
+        return filmService.addFilm(film);
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film newFilm) {
-        log.info("Обновление фильма с ID: {}", newFilm.getId());
-        Film oldFilm = filmStorage.updateFilm(newFilm);
         log.info("Фильм с ID: {} успешно обновлён.", newFilm.getId());
-        return oldFilm;
+        return filmService.updateFilm(newFilm);
     }
 
     @PutMapping("/{id}/like/{userId}")
     public void addLike(@PathVariable Long id, @PathVariable Long userId) {
-        filmService.addLike(id, userId);
         log.info("Лайк добавлен: Film ID = {}, User ID = {}", id, userId);
+        filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
     public void removeLike(@PathVariable Long id, @PathVariable Long userId) {
-        filmService.removeLike(id, userId);
         log.info("Лайк удалён: Film ID = {}, User ID = {}", id, userId);
+        filmService.deleteLike(id, userId);
     }
 
     @GetMapping("/popular")

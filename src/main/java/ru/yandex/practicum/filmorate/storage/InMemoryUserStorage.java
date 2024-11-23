@@ -3,13 +3,13 @@ package ru.yandex.practicum.filmorate.storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
+import ru.yandex.practicum.filmorate.exception.SelfFriendException;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -81,6 +81,69 @@ public class InMemoryUserStorage implements UserStorage {
         if (user.getLogin() == null || user.getLogin().contains(" ")) {
             throw new ValidationException("Не может быть пустым и содержать пробелы");
         }
+    }
+
+    @Override
+    public void addFriend(Long id, Long friendId) {
+        if (id == null || friendId == null) {
+            throw new IllegalArgumentException("ID пользователя или друга не может быть null.");
+        }
+
+        if (id.equals(friendId)) {
+            throw new SelfFriendException("Пользователь не может добавить сам себя в друзья.");
+        }
+
+        User user = getUserById(id);
+        if (user == null) {
+            throw new UserNotFoundException("Пользователь с ID " + id + " не найден.");
+        }
+
+        User friendsUser = getUserById(friendId);
+        if (friendsUser == null) {
+            throw new UserNotFoundException("Пользователь с ID " + friendId + " не найден.");
+        }
+
+        if (user.getFriends().contains(friendId)) {
+            throw new IllegalStateException("Пользователи уже являются друзьями.");
+        }
+
+        user.getFriends().add(friendId);
+        friendsUser.getFriends().add(id);
+    }
+
+    @Override
+    public void deleteFriend(Long id, Long friendId) {
+        User user = getUserById(id);
+        User friendsUser = getUserById(friendId);
+
+        user.getFriends().remove(friendId);
+        friendsUser.getFriends().remove(id);
+    }
+
+    @Override
+    public List<User> getFriends(Long id) {
+        User user = getUserById(id);
+        if (user == null) {
+            throw new UserNotFoundException("Пользователь с ID " + id + " не найден.");
+        }
+        return user.getFriends().stream()
+                .map(this::getUserById)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> getCommonFriends(Long id, Long friendId) {
+        Set<Long> user = getUserById(id).getFriends();
+        Set<Long> friend = getUserById(friendId).getFriends();
+
+        if (user.isEmpty() || friend.isEmpty()) {
+            throw new IllegalStateException("У пользователей нет друзей.");
+        }
+
+        return user.stream()
+                .filter(friend::contains)
+                .map(this::getUserById)
+                .toList();
     }
 }
 
