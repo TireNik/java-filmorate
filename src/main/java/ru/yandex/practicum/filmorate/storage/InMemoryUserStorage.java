@@ -94,14 +94,8 @@ public class InMemoryUserStorage implements UserStorage {
         }
 
         User user = getUserById(id);
-        if (user == null) {
-            throw new UserNotFoundException("Пользователь с ID " + id + " не найден.");
-        }
 
         User friendsUser = getUserById(friendId);
-        if (friendsUser == null) {
-            throw new UserNotFoundException("Пользователь с ID " + friendId + " не найден.");
-        }
 
         if (user.getFriends().contains(friendId)) {
             throw new IllegalStateException("Пользователи уже являются друзьями.");
@@ -123,9 +117,6 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public List<User> getFriends(Long id) {
         User user = getUserById(id);
-        if (user == null) {
-            throw new UserNotFoundException("Пользователь с ID " + id + " не найден.");
-        }
         return user.getFriends().stream()
                 .map(this::getUserById)
                 .collect(Collectors.toList());

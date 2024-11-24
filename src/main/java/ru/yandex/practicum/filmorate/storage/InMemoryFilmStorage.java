@@ -70,8 +70,8 @@ public class InMemoryFilmStorage implements FilmStorage {
             throw new ValidationException("Id должен быть указан");
         }
         if (!films.containsKey(newFilm.getId())) {
-            log.error("Ошибка обновления: Фильм с указанным id не найден.");
-            throw new ResourceNotFoundException("Фильм с указанным id не найден");
+            log.error("Ошибка обновления: Фильм с указанным id {} не найден.", newFilm.getId());
+            throw new ResourceNotFoundException("Фильм с указанным id " + newFilm.getId() +" не найден");
         }
 
         films.put(newFilm.getId(), newFilm);
