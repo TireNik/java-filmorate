@@ -34,25 +34,25 @@ public class FilmController {
 
     @PostMapping
     public Film addFilm(@Valid @RequestBody Film film) {
-        log.info("Фильм успешно добавлен с ID: {}", film.getId());
+        log.info("Добавляем фильм с ID: {}", film.getId());
         return filmService.addFilm(film);
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film newFilm) {
-        log.info("Фильм с ID: {} успешно обновлён.", newFilm.getId());
+        log.info("Обновляем фильм с ID: {}", newFilm.getId());
         return filmService.updateFilm(newFilm);
     }
 
     @PutMapping("/{id}/like/{userId}")
     public void addLike(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Лайк добавлен: Film ID = {}, User ID = {}", id, userId);
+        log.info("Добавляем лайк: Film ID = {}, User ID = {}", id, userId);
         filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
     public void removeLike(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Лайк удалён: Film ID = {}, User ID = {}", id, userId);
+        log.info("Удаляем лайк: Film ID = {}, User ID = {}", id, userId);
         filmService.deleteLike(id, userId);
     }
 
