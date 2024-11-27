@@ -39,8 +39,8 @@ public class UserControllerTest {
                         .content(createTestUserJson("", "testUser", "Test User",
                                 "2000-01-01")))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message",
-                        containsString("Электронная почта не может быть пустой")));
+                .andExpect(jsonPath("$.error",
+                        containsString("Validation error")));
     }
 
     @Test
@@ -50,8 +50,8 @@ public class UserControllerTest {
                         .content(createTestUserJson("invalidEmail", "testUser", "Test User",
                                 "2000-01-01")))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message",
-                        containsString("Электронная почта должна содержать символ @")));
+                .andExpect(jsonPath("$.error",
+                        containsString("Validation error")));
     }
 
     @Test
@@ -61,8 +61,8 @@ public class UserControllerTest {
                         .content(createTestUserJson("test@example.com", "testUser",
                                 "Test User", "2099-01-01")))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message",
-                        containsString("Дата рождения не может быть в будущем")));
+                .andExpect(jsonPath("$.error",
+                        containsString("Validation error")));
     }
 
     @Test

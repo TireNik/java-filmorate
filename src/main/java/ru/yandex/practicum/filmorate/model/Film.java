@@ -8,9 +8,6 @@ import ru.yandex.practicum.filmorate.validation.ReleaseDate;
 import java.time.LocalDate;
 
 @Data
-@Builder(toBuilder = true)
-@AllArgsConstructor
-@NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Film {
 
