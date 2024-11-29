@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.SelfFriendException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.FriendsShip;
+import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Long, User> users = new HashMap<>();
+    private final List<FriendsShip> friendsShips = new ArrayList<>();
 
     @Override
     public Collection<User> getUsers() {
@@ -92,48 +95,55 @@ public class InMemoryUserStorage implements UserStorage {
             throw new SelfFriendException("Пользователь не может добавить сам себя в друзья.");
         }
 
-        User user = getUserById(id);
+        boolean exist = friendsShips.stream()
+                .anyMatch(f -> f.getUserId().equals(id) && f.getFriendId().equals(friendId));
 
-        User friendsUser = getUserById(friendId);
-
-        if (user.getFriends().contains(friendId)) {
-            throw new IllegalStateException("Пользователи уже являются друзьями.");
+        if (exist) {
+            throw new IllegalStateException("Запрос на дружбу уже существует.");
         }
 
-        user.getFriends().add(friendId);
-        friendsUser.getFriends().add(id);
+        friendsShips.add(new FriendsShip(id, friendId, FriendshipStatus.UNCONFIRMED));
+        log.info("Запрос на дружбу отправлен от {} к {}", id, friendId);
     }
 
     @Override
     public void deleteFriend(Long id, Long friendId) {
-        User user = getUserById(id);
-        User friendsUser = getUserById(friendId);
-
-        user.getFriends().remove(friendId);
-        friendsUser.getFriends().remove(id);
+        friendsShips.removeIf(f ->
+                (f.getUserId().equals(id) && f.getFriendId().equals(friendId)) ||
+                        (f.getUserId().equals(friendId) && f.getFriendId().equals(id))
+        );
+        log.info("Дружба между {} и {} удалена", id, friendId);
     }
 
     @Override
     public List<User> getFriends(Long id) {
-        User user = getUserById(id);
-        return user.getFriends().stream()
-                .map(this::getUserById)
+        return friendsShips.stream()
+                .filter(f -> (f.getUserId().equals(id) || f.getFriendId().equals(id) &&
+                        f.getStatus() == FriendshipStatus.CONFIRMED))
+                .map(f -> f.getUserId().equals(id) ? getUserById(f.getFriendId()) : getUserById(f.getUserId()))
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<User> getCommonFriends(Long id, Long friendId) {
-        Set<Long> user = getUserById(id).getFriends();
-        Set<Long> friend = getUserById(friendId).getFriends();
-
-        if (user.isEmpty() || friend.isEmpty()) {
-            throw new IllegalStateException("У пользователей нет друзей.");
-        }
+        List<User> user = getFriends(id);
+        List<User> friend = getFriends(friendId);
 
         return user.stream()
                 .filter(friend::contains)
-                .map(this::getUserById)
-                .toList();
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void confirmFriendship(Long id, Long friendId) {
+        FriendsShip friendsShip = friendsShips.stream()
+                .filter(f -> f.getUserId().equals(id) && f.getFriendId().equals(friendId) &&
+                        f.getStatus().equals(FriendshipStatus.UNCONFIRMED))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Запрос на дружбу не найден."));
+
+        friendsShip.setStatus(FriendshipStatus.CONFIRMED);
+        log.info("Дружба подтверждена между {} и {}", id, friendId);
     }
 }
 

@@ -22,4 +22,6 @@ public interface UserStorage {
     List<User> getFriends(Long id);
 
     List<User> getCommonFriends(Long id, Long friendId);
+
+    void confirmFriendship(Long id, Long friendId);
 }
