@@ -112,6 +112,15 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public void deleteFriend(Long id, Long friendId) {
+        boolean isFriendshipExists = friendsShips.stream()
+                .anyMatch(f -> (f.getUserId().equals(id) && f.getFriendId().equals(friendId)) ||
+                        (f.getUserId().equals(friendId) && f.getFriendId().equals(id)));
+
+        if (!isFriendshipExists) {
+            log.error("Дружбы между {} и {} не существует", id, friendId);
+            throw new ResourceNotFoundException("Дружба между пользователями не найдена");
+        }
+
         friendsShips.removeIf(f ->
                 (f.getUserId().equals(id) && f.getFriendId().equals(friendId)) ||
                         (f.getUserId().equals(friendId) && f.getFriendId().equals(id))
