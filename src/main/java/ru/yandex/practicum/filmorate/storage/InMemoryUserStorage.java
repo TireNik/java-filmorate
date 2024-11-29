@@ -91,6 +91,10 @@ public class InMemoryUserStorage implements UserStorage {
             throw new IllegalArgumentException("ID пользователя или друга не может быть null.");
         }
 
+        if (id <= 0 || friendId <= 0) {
+            throw new IllegalArgumentException("ID пользователя должен быть положительным числом.");
+        }
+
         if (id.equals(friendId)) {
             throw new SelfFriendException("Пользователь не может добавить сам себя в друзья.");
         }
@@ -117,6 +121,12 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public List<User> getFriends(Long id) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID пользователя должен быть положительным числом.");
+        }
+        if (id == null) {
+            throw new IllegalArgumentException("ID пользователя не может быть null.");
+        }
         return friendsShips.stream()
                 .filter(f -> (f.getUserId().equals(id) || f.getFriendId().equals(id) &&
                         f.getStatus() == FriendshipStatus.CONFIRMED))
