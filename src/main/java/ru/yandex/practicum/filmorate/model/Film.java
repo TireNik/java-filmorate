@@ -30,6 +30,5 @@ public class Film {
 
     LinkedHashSet<Genre> genres = new LinkedHashSet<>();
 
-    @NotNull
     private MPA mpa;
 }
