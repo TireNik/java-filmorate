@@ -1,40 +1,40 @@
-Film
--
-FilmId PK long
-Name varchar(100)
-Description varchar(200)
-ReleaseDate localDate
+create table "user" (
+userId serial not null primary key,
+email varchar(200),
+login varchar(200),
+"name" varchar(200),
+BirthDay date
+);
 
-Mpa
--
-FilmId long FK >- Film.FilmId
-Rate string
+create table film (
+filmid serial not null primary key,
+"name" varchar(200),
+description varchar (200),
+releasedate date
+);
 
-FilmGenre
--
-FilmId long FK >- Film.FilmId
-GenreId int FK >- Genre.Id
+create table "like" (
+filmid int not null references film(filmid),
+userid int not null references "user"(userid)
+);
 
-Genre
--
-Id int PK
-Name varchar(100)
+create table friendship (
+userid int not null references "user"(userid),
+friendid int not null references "user"(userid),
+status varchar
+);
 
-User
--
-UserId PK long
-Email string UNIQUE
-Login varchar(200)
-Name varchar(200)
-BirthDay localDate
+create table mpa (
+filmid int not null references film(filmid),
+rate varchar(50)
+);
 
-Like
--
-FilmId long FK >- Film.FilmId
-UserId long FK >- User.UserId
+create table filmgenre  ( 
+filmid int not null references film(filmid),
+genreid int not null references genre(id)
+);
 
-FriendShip
--
-UserId long FK >- User.UserId
-FriendId long FK >- User.UserId
-Status string
+create table genre (
+id serial not null primary key,
+name varchar(100)
+);
