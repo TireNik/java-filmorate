@@ -1,0 +1,40 @@
+Film
+-
+FilmId PK long
+Name varchar(100)
+Description varchar(200)
+ReleaseDate localDate
+
+Mpa
+-
+FilmId long FK >- Film.FilmId
+Rate string
+
+FilmGenre
+-
+FilmId long FK >- Film.FilmId
+GenreId int FK >- Genre.Id
+
+Genre
+-
+Id int PK
+Name varchar(100)
+
+User
+-
+UserId PK long
+Email string UNIQUE
+Login varchar(200)
+Name varchar(200)
+BirthDay localDate
+
+Like
+-
+FilmId long FK >- Film.FilmId
+UserId long FK >- User.UserId
+
+FriendShip
+-
+UserId long FK >- User.UserId
+FriendId long FK >- User.UserId
+Status string
