@@ -9,5 +9,5 @@ import lombok.experimental.FieldDefaults;
 public class FriendsShip {
     Long userId;
     Long friendId;
-    FriendshipStatus status;
+    boolean status;
 }

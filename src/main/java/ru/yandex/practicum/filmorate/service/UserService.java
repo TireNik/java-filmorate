@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PutMapping;
 import ru.yandex.practicum.filmorate.model.User;
@@ -12,9 +13,12 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
+
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     public Collection<User> getUsers() {
         log.info("Получение списка всех пользователей");
