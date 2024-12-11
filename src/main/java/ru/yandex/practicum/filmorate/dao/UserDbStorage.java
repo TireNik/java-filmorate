@@ -3,13 +3,11 @@ package ru.yandex.practicum.filmorate.dao;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.FriendsShip;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -69,8 +67,30 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public void addFriend(Long id, Long friendId) {
+    public void addFriend(Long userId, Long friendId) {
+        final String CHECK_QUERY = "SELECT * FROM friendships WHERE user_id = ? AND friend_id = ?";
+        final String INSERT_QUERY = "INSERT INTO friendships (user_id, friend_id, status) VALUES (?, ?, ?)";
+        final String UPDATE_QUERY = "UPDATE friendship SET status = ? WHERE user_id = ? AND fried_id = ?";
 
+        try {
+            List<FriendsShip> friendsShips = jdbc.query(CHECK_QUERY, (rs, rowNum) ->
+                    new FriendsShip(
+                            rs.getLong("user_id"),
+                            rs.getLong("friend_id"),
+                            rs.getBoolean("status")
+                    ), userId, friendId
+            );
+
+            if (friendsShips.isEmpty()) {
+                jdbc.update(INSERT_QUERY, userId, friendId, false);
+            } else {
+                jdbc.update(UPDATE_QUERY,true, userId, friendId);
+                jdbc.update(UPDATE_QUERY, true, friendId,userId);
+            }
+        } catch (Exception e) {
+            log.error("Ошибка при добавлении друга: userId={}, friendId={}", userId, friendId, e);
+            throw new RuntimeException("Ошибка при добавлении друга", e);
+        }
     }
 
     @Override
