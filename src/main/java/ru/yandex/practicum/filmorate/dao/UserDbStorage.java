@@ -3,10 +3,12 @@ package ru.yandex.practicum.filmorate.dao;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.FriendsShip;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -15,6 +17,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 @Repository
@@ -51,19 +54,50 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Collection<User> getUsers() {
-        return List.of();
+        String GET_USERS_QUERY = "SELECT * FROM users";
+        return jdbc.query(GET_USERS_QUERY, (rs, rowNum) -> new User(
+                rs.getLong("user_id"),
+                rs.getString("email"),
+                rs.getString("login"),
+                rs.getString("name"),
+                rs.getDate("birth_day").toLocalDate(),
+                new HashSet<>()
+        ));
     }
 
     @Override
     public User getUserById(Long id) {
-        return null;
+        String GET_USER_BY_ID_QUERY = "SELECT * FROM users WHERE user_id = ?";
+        try {
+            return jdbc.queryForObject(GET_USER_BY_ID_QUERY, (rs, rowNum) -> new User(
+                    rs.getLong("user_id"),
+                    rs.getString("email"),
+                    rs.getString("login"),
+                    rs.getString("name"),
+                    rs.getDate("birth_day").toLocalDate(),
+                    new HashSet<>()
+            ), id);
+        } catch (EmptyResultDataAccessException e) {
+            log.error("Пользователь с id={} не найден", id);
+            throw new RuntimeException("Пользователь с указанным id не найден", e);
+        }
     }
-
-
 
     @Override
     public User updateUser(User newUser) {
-        return null;
+        String UPDATE_USER_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birth_day = ? WHERE user_id = ?";
+        int rowsUpdated = jdbc.update(UPDATE_USER_QUERY,
+                newUser.getEmail(),
+                newUser.getLogin(),
+                newUser.getName(),
+                Date.valueOf(newUser.getBirthday()),
+                newUser.getId()
+        );
+        if (rowsUpdated == 0) {
+            log.error("Не удалось обновить пользователя с id={}", newUser.getId());
+            throw new UserNotFoundException("Пользователь с указанным id не найден");
+        }
+        return getUserById(newUser.getId());
     }
 
     @Override
