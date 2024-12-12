@@ -19,6 +19,7 @@ import java.sql.Statement;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @Slf4j
@@ -104,22 +105,35 @@ public class UserDbStorage implements UserStorage {
     public void addFriend(Long userId, Long friendId) {
         final String CHECK_QUERY = "SELECT * FROM friendships WHERE user_id = ? AND friend_id = ?";
         final String INSERT_QUERY = "INSERT INTO friendships (user_id, friend_id, status) VALUES (?, ?, ?)";
-        final String UPDATE_QUERY = "UPDATE friendship SET status = ? WHERE user_id = ? AND fried_id = ?";
+        final String UPDATE_QUERY = "UPDATE friendships SET status = TRUE WHERE user_id = ? AND friend_id = ?";
 
         try {
-            List<FriendsShip> friendsShips = jdbc.query(CHECK_QUERY, (rs, rowNum) ->
-                    new FriendsShip(
+            List<FriendsShip> existingFriendship = jdbc.query(CHECK_QUERY,
+                    (rs, rowNum) -> new FriendsShip(
                             rs.getLong("user_id"),
                             rs.getLong("friend_id"),
                             rs.getBoolean("status")
-                    ), userId, friendId
+                    ),
+                    userId, friendId
             );
 
-            if (friendsShips.isEmpty()) {
+            if (existingFriendship.isEmpty()) {
                 jdbc.update(INSERT_QUERY, userId, friendId, false);
-            } else {
-                jdbc.update(UPDATE_QUERY,true, userId, friendId);
-                jdbc.update(UPDATE_QUERY, true, friendId,userId);
+            } else if (!existingFriendship.get(0).isStatus()) {
+                jdbc.update(UPDATE_QUERY, userId, friendId);
+            }
+
+            List<FriendsShip> reverseFriendship = jdbc.query(CHECK_QUERY,
+                    (rs, rowNum) -> new FriendsShip(
+                            rs.getLong("user_id"),
+                            rs.getLong("friend_id"),
+                            rs.getBoolean("status")
+                    ),
+                    friendId, userId
+            );
+
+            if (!reverseFriendship.isEmpty() && !reverseFriendship.get(0).isStatus()) {
+                jdbc.update(UPDATE_QUERY, friendId, userId);
             }
         } catch (Exception e) {
             log.error("Ошибка при добавлении друга: userId={}, friendId={}", userId, friendId, e);
@@ -129,16 +143,52 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void deleteFriend(Long id, Long friendId) {
-
+        String DELETE_FRIEND_QUERY = "DELETE FROM friendships WHERE user_id = ? AND friend_id = ?";
+        int rowsDeleted = jdbc.update(DELETE_FRIEND_QUERY, id, friendId);
+        if (rowsDeleted == 0) {
+            log.warn("Не удалось удалить друга с id={} у пользователя с id={}", friendId, id);
+        } else {
+            log.info("Друг с id={} успешно удален у пользователя с id={}", friendId, id);
+        }
     }
 
     @Override
     public List<User> getFriends(Long id) {
-        return List.of();
+        final String GET_FRIENDS_QUERY =
+                "SELECT u.* FROM users u " +
+                        "JOIN friendships f ON u.user_id = f.friend_id " +
+                        "WHERE f.user_id = ?";
+
+        return jdbc.query(GET_FRIENDS_QUERY,
+                (rs, rowNum) -> new User(
+                        rs.getLong("user_id"),
+                        rs.getString("email"),
+                        rs.getString("login"),
+                        rs.getString("name"),
+                        rs.getDate("birth_day").toLocalDate(),
+                        new HashSet<>()
+                ),
+                id
+        );
     }
 
     @Override
     public List<User> getCommonFriends(Long id, Long friendId) {
-        return List.of();
+        String GET_COMMON_FRIENDS_QUERY =
+                "SELECT u.* FROM users u " +
+                        "JOIN friendships f1 ON u.user_id = f1.friend_id " +
+                        "JOIN friendships f2 ON u.user_id = f2.friend_id " +
+                        "WHERE f1.user_id = ? AND f2.user_id = ? AND f1.status = TRUE AND f2.status = TRUE";
+        return jdbc.query(GET_COMMON_FRIENDS_QUERY,
+                (rs, rowNum) -> new User(
+                        rs.getLong("user_id"),
+                        rs.getString("email"),
+                        rs.getString("login"),
+                        rs.getString("name"),
+                        rs.getDate("birth_day").toLocalDate(),
+                        new HashSet<>()
+                ),
+                id, friendId
+        );
     }
 }
