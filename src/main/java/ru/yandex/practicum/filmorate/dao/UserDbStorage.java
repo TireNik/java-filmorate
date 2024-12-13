@@ -19,7 +19,6 @@ import java.sql.Statement;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Repository
 @Slf4j
@@ -103,11 +102,22 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void addFriend(Long userId, Long friendId) {
+        final String CHECK_USER_QUERY = "SELECT COUNT(*) FROM users WHERE user_id = ?";
         final String CHECK_QUERY = "SELECT * FROM friendships WHERE user_id = ? AND friend_id = ?";
         final String INSERT_QUERY = "INSERT INTO friendships (user_id, friend_id, status) VALUES (?, ?, ?)";
         final String UPDATE_QUERY = "UPDATE friendships SET status = TRUE WHERE user_id = ? AND friend_id = ?";
 
         try {
+            Integer userCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, userId);
+            if (userCount == null || userCount == 0) {
+                throw new UserNotFoundException("Пользователь с ID " + userId + " не найден");
+            }
+
+            Integer friendCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, friendId);
+            if (friendCount == null || friendCount == 0) {
+                throw new UserNotFoundException("Пользователь с ID " + friendId + " не найден");
+            }
+
             List<FriendsShip> existingFriendship = jdbc.query(CHECK_QUERY,
                     (rs, rowNum) -> new FriendsShip(
                             rs.getLong("user_id"),
@@ -135,6 +145,9 @@ public class UserDbStorage implements UserStorage {
             if (!reverseFriendship.isEmpty() && !reverseFriendship.get(0).isStatus()) {
                 jdbc.update(UPDATE_QUERY, friendId, userId);
             }
+        } catch (UserNotFoundException e) {
+            log.error("Ошибка: {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
             log.error("Ошибка при добавлении друга: userId={}, friendId={}", userId, friendId, e);
             throw new RuntimeException("Ошибка при добавлении друга", e);
@@ -144,32 +157,52 @@ public class UserDbStorage implements UserStorage {
     @Override
     public void deleteFriend(Long id, Long friendId) {
         String DELETE_FRIEND_QUERY = "DELETE FROM friendships WHERE user_id = ? AND friend_id = ?";
-        int rowsDeleted = jdbc.update(DELETE_FRIEND_QUERY, id, friendId);
-        if (rowsDeleted == 0) {
-            log.warn("Не удалось удалить друга с id={} у пользователя с id={}", friendId, id);
-        } else {
-            log.info("Друг с id={} успешно удален у пользователя с id={}", friendId, id);
+        String CHECK_USER_QUERY = "SELECT COUNT(*) FROM users WHERE user_id = ?";
+
+        try {
+            Integer userCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, id);
+            if (userCount == null || userCount == 0) {
+                throw new UserNotFoundException("Пользователь с ID " + id + " не найден");
+            }
+            Integer friendCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, friendId);
+            if (friendCount == null || friendCount == 0) {
+                throw new UserNotFoundException("Пользователь с ID " + friendId + " не найден");
+            }
+            int rowsDeleted = jdbc.update(DELETE_FRIEND_QUERY, id, friendId);
+        } catch (UserNotFoundException e) {
+            log.error("Ошибка: {}", e.getMessage());
+            throw e;
         }
     }
 
     @Override
     public List<User> getFriends(Long id) {
-        final String GET_FRIENDS_QUERY =
+        String GET_FRIENDS_QUERY =
                 "SELECT u.* FROM users u " +
                         "JOIN friendships f ON u.user_id = f.friend_id " +
                         "WHERE f.user_id = ?";
+        String CHECK_USER_QUERY = "SELECT COUNT(*) FROM users WHERE user_id = ?";
 
-        return jdbc.query(GET_FRIENDS_QUERY,
-                (rs, rowNum) -> new User(
-                        rs.getLong("user_id"),
-                        rs.getString("email"),
-                        rs.getString("login"),
-                        rs.getString("name"),
-                        rs.getDate("birth_day").toLocalDate(),
-                        new HashSet<>()
-                ),
-                id
-        );
+        try {
+            Integer userCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, id);
+            if (userCount == null || userCount == 0) {
+                throw new UserNotFoundException("Пользователь с ID " + id + " не найден");
+            }
+            return jdbc.query(GET_FRIENDS_QUERY,
+                    (rs, rowNum) -> new User(
+                            rs.getLong("user_id"),
+                            rs.getString("email"),
+                            rs.getString("login"),
+                            rs.getString("name"),
+                            rs.getDate("birth_day").toLocalDate(),
+                            new HashSet<>()
+                    ),
+                    id
+            );
+        } catch (UserNotFoundException e) {
+            log.error("Ошибка: {}", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
@@ -178,7 +211,7 @@ public class UserDbStorage implements UserStorage {
                 "SELECT u.* FROM users u " +
                         "JOIN friendships f1 ON u.user_id = f1.friend_id " +
                         "JOIN friendships f2 ON u.user_id = f2.friend_id " +
-                        "WHERE f1.user_id = ? AND f2.user_id = ? AND f1.status = TRUE AND f2.status = TRUE";
+                        "WHERE f1.user_id = ? AND f2.user_id = ?";
         return jdbc.query(GET_COMMON_FRIENDS_QUERY,
                 (rs, rowNum) -> new User(
                         rs.getLong("user_id"),

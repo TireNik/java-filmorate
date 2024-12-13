@@ -39,3 +39,4 @@ public class User {
         this.friends = friends != null ? friends : new HashSet<>();
     }
 }
+
