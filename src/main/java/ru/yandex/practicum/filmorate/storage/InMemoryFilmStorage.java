@@ -13,7 +13,7 @@ import java.util.*;
 @Slf4j
 @Component
 @Qualifier("InMemoryFilmStorage")
-public class InMemoryFilmStorage implements FilmStorage {
+public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
 
     private final Map<Long, Film> films = new HashMap<>();
     private final Map<Long, Set<Long>> likes = new HashMap<>();

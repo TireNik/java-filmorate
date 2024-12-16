@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PutMapping;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
@@ -14,9 +15,12 @@ import java.util.List;
 @Service
 public class UserService {
     private final UserStorage userStorage;
+    private final FriendshipStorage friendshipStorage;
 
-    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage,
+                       @Qualifier("friendDbStorage") FriendshipStorage friendshipStorage) {
         this.userStorage = userStorage;
+        this.friendshipStorage = friendshipStorage;
     }
 
     public Collection<User> getUsers() {
@@ -45,20 +49,20 @@ public class UserService {
     }
 
     public void addFriend(Long id, Long friendId) {
-        userStorage.addFriend(id, friendId);
+        friendshipStorage.addFriend(id, friendId);
         log.debug("Пользователи {} и {} теперь друзья.", id, friendId);
     }
 
     public void deleteFriend(Long id, Long friendId) {
-        userStorage.deleteFriend(id, friendId);
+        friendshipStorage.deleteFriend(id, friendId);
         log.debug("Пользователи {} и {} удалены из друзей.", id, friendId);
     }
 
     public List<User> getFriends(Long id) {
-        return userStorage.getFriends(id);
+        return friendshipStorage.getFriends(id);
     }
 
     public List<User> getCommonFriends(Long id, Long friendId) {
-        return userStorage.getCommonFriends(id, friendId);
+        return friendshipStorage.getCommonFriends(id, friendId);
     }
 }

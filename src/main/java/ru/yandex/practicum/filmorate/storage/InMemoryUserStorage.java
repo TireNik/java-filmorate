@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @Qualifier("inMemoryUserStorage")
-public class InMemoryUserStorage implements UserStorage {
+public class InMemoryUserStorage implements UserStorage, FriendshipStorage {
 
     private final Map<Long, User> users = new HashMap<>();
 

@@ -1,3 +1,5 @@
 # java-filmorate
 Template repository for Filmorate project.
-![](https://github.com/TireNik/java-filmorate/blob/main/filmorate-DB.png)
+В проекте использется докер
+База проекта - h2
+![](scheme_image.png)

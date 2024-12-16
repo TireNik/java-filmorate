@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.dao;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
@@ -37,15 +36,18 @@ public class MpaDbStorage implements MpaStorage {
 
     @Override
     public Optional<Mpa> getMpaById(Integer id) {
-        String sql = "ELECT * FROM mpa_rating WHERE rating_id = ?";
-        try {
-            return jdbc.query(sql, (rs, rowNum) -> rowMpa(rs), id)
-                    .stream()
-                    .findFirst();
-        } catch (EmptyResultDataAccessException e) {
+        String sql = "SELECT * FROM mpa_rating WHERE rating_id = ?";
+        String CHECK_MPA_ID = "SELECT COUNT(*) FROM mpa_rating WHERE rating_id = ?";
+
+        Integer count = jdbc.queryForObject(CHECK_MPA_ID, Integer.class, id);
+        if (count == null || count == 0) {
             log.error("Ошибка получения Mpa с id {}", id);
             throw new ResourceNotFoundException("Ошибка получения Mpa");
         }
+
+            return jdbc.query(sql, (rs, rowNum) -> rowMpa(rs), id)
+                    .stream()
+                    .findFirst();
     }
 
     private Mpa rowMpa(ResultSet rs) throws SQLException {
