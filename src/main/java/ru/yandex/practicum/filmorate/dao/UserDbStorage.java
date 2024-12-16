@@ -8,8 +8,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dao.Mapper.UserMapper;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
-import ru.yandex.practicum.filmorate.model.FriendsShip;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -17,8 +17,6 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 
 @Repository
 @Slf4j
@@ -29,6 +27,7 @@ public class UserDbStorage implements UserStorage {
             "VALUES (?, ?, ?, ?)";
 
     private final JdbcTemplate jdbc;
+    private final UserMapper userMapper;
 
     @Override
     public User addUser(User user) {
@@ -36,10 +35,7 @@ public class UserDbStorage implements UserStorage {
         try {
             jdbc.update(con -> {
                 PreparedStatement ps = con.prepareStatement(INSERT_QUERY, Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1, user.getEmail());
-                ps.setString(2, user.getLogin());
-                ps.setString(3, user.getName());
-                ps.setString(4, String.valueOf(Date.valueOf(user.getBirthday())));
+                userMapper.setUserParameters(ps, user);
                 return ps;
             }, keyHolder);
 
@@ -54,29 +50,15 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Collection<User> getUsers() {
-        String GET_USERS_QUERY = "SELECT * FROM users";
-        return jdbc.query(GET_USERS_QUERY, (rs, rowNum) -> new User(
-                rs.getLong("user_id"),
-                rs.getString("email"),
-                rs.getString("login"),
-                rs.getString("name"),
-                rs.getDate("birth_day").toLocalDate(),
-                new HashSet<>()
-        ));
+        final String GET_USERS_QUERY = "SELECT * FROM users";
+        return jdbc.query(GET_USERS_QUERY, (rs, rowNum) -> userMapper.mapToUser(rs));
     }
 
     @Override
     public User getUserById(Long id) {
-        String GET_USER_BY_ID_QUERY = "SELECT * FROM users WHERE user_id = ?";
+        final String GET_USER_BY_ID_QUERY = "SELECT * FROM users WHERE user_id = ?";
         try {
-            return jdbc.queryForObject(GET_USER_BY_ID_QUERY, (rs, rowNum) -> new User(
-                    rs.getLong("user_id"),
-                    rs.getString("email"),
-                    rs.getString("login"),
-                    rs.getString("name"),
-                    rs.getDate("birth_day").toLocalDate(),
-                    new HashSet<>()
-            ), id);
+            return jdbc.queryForObject(GET_USER_BY_ID_QUERY, (rs, rowNum) -> userMapper.mapToUser(rs), id);
         } catch (EmptyResultDataAccessException e) {
             log.error("Пользователь с id={} не найден", id);
             throw new RuntimeException("Пользователь с указанным id не найден", e);
@@ -85,7 +67,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User updateUser(User newUser) {
-        String UPDATE_USER_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birth_day = ? WHERE user_id = ?";
+        final String UPDATE_USER_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birth_day = ? WHERE user_id = ?";
         int rowsUpdated = jdbc.update(UPDATE_USER_QUERY,
                 newUser.getEmail(),
                 newUser.getLogin(),
@@ -100,128 +82,4 @@ public class UserDbStorage implements UserStorage {
         return getUserById(newUser.getId());
     }
 
-    @Override
-    public void addFriend(Long userId, Long friendId) {
-        final String CHECK_USER_QUERY = "SELECT COUNT(*) FROM users WHERE user_id = ?";
-        final String CHECK_QUERY = "SELECT * FROM friendships WHERE user_id = ? AND friend_id = ?";
-        final String INSERT_QUERY = "INSERT INTO friendships (user_id, friend_id, status) VALUES (?, ?, ?)";
-        final String UPDATE_QUERY = "UPDATE friendships SET status = TRUE WHERE user_id = ? AND friend_id = ?";
-
-        try {
-            Integer userCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, userId);
-            if (userCount == null || userCount == 0) {
-                throw new UserNotFoundException("Пользователь с ID " + userId + " не найден");
-            }
-
-            Integer friendCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, friendId);
-            if (friendCount == null || friendCount == 0) {
-                throw new UserNotFoundException("Пользователь с ID " + friendId + " не найден");
-            }
-
-            List<FriendsShip> existingFriendship = jdbc.query(CHECK_QUERY,
-                    (rs, rowNum) -> new FriendsShip(
-                            rs.getLong("user_id"),
-                            rs.getLong("friend_id"),
-                            rs.getBoolean("status")
-                    ),
-                    userId, friendId
-            );
-
-            if (existingFriendship.isEmpty()) {
-                jdbc.update(INSERT_QUERY, userId, friendId, false);
-            } else if (!existingFriendship.get(0).isStatus()) {
-                jdbc.update(UPDATE_QUERY, userId, friendId);
-            }
-
-            List<FriendsShip> reverseFriendship = jdbc.query(CHECK_QUERY,
-                    (rs, rowNum) -> new FriendsShip(
-                            rs.getLong("user_id"),
-                            rs.getLong("friend_id"),
-                            rs.getBoolean("status")
-                    ),
-                    friendId, userId
-            );
-
-            if (!reverseFriendship.isEmpty() && !reverseFriendship.get(0).isStatus()) {
-                jdbc.update(UPDATE_QUERY, friendId, userId);
-            }
-        } catch (UserNotFoundException e) {
-            log.error("Ошибка: {}", e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Ошибка при добавлении друга: userId={}, friendId={}", userId, friendId, e);
-            throw new RuntimeException("Ошибка при добавлении друга", e);
-        }
-    }
-
-    @Override
-    public void deleteFriend(Long id, Long friendId) {
-        String DELETE_FRIEND_QUERY = "DELETE FROM friendships WHERE user_id = ? AND friend_id = ?";
-        String CHECK_USER_QUERY = "SELECT COUNT(*) FROM users WHERE user_id = ?";
-
-        try {
-            Integer userCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, id);
-            if (userCount == null || userCount == 0) {
-                throw new UserNotFoundException("Пользователь с ID " + id + " не найден");
-            }
-            Integer friendCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, friendId);
-            if (friendCount == null || friendCount == 0) {
-                throw new UserNotFoundException("Пользователь с ID " + friendId + " не найден");
-            }
-            int rowsDeleted = jdbc.update(DELETE_FRIEND_QUERY, id, friendId);
-        } catch (UserNotFoundException e) {
-            log.error("Ошибка: {}", e.getMessage());
-            throw e;
-        }
-    }
-
-    @Override
-    public List<User> getFriends(Long id) {
-        String GET_FRIENDS_QUERY =
-                "SELECT u.* FROM users u " +
-                        "JOIN friendships f ON u.user_id = f.friend_id " +
-                        "WHERE f.user_id = ?";
-        String CHECK_USER_QUERY = "SELECT COUNT(*) FROM users WHERE user_id = ?";
-
-        try {
-            Integer userCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, id);
-            if (userCount == null || userCount == 0) {
-                throw new UserNotFoundException("Пользователь с ID " + id + " не найден");
-            }
-            return jdbc.query(GET_FRIENDS_QUERY,
-                    (rs, rowNum) -> new User(
-                            rs.getLong("user_id"),
-                            rs.getString("email"),
-                            rs.getString("login"),
-                            rs.getString("name"),
-                            rs.getDate("birth_day").toLocalDate(),
-                            new HashSet<>()
-                    ),
-                    id
-            );
-        } catch (UserNotFoundException e) {
-            log.error("Ошибка: {}", e.getMessage());
-            throw e;
-        }
-    }
-
-    @Override
-    public List<User> getCommonFriends(Long id, Long friendId) {
-        String GET_COMMON_FRIENDS_QUERY =
-                "SELECT u.* FROM users u " +
-                        "JOIN friendships f1 ON u.user_id = f1.friend_id " +
-                        "JOIN friendships f2 ON u.user_id = f2.friend_id " +
-                        "WHERE f1.user_id = ? AND f2.user_id = ?";
-        return jdbc.query(GET_COMMON_FRIENDS_QUERY,
-                (rs, rowNum) -> new User(
-                        rs.getLong("user_id"),
-                        rs.getString("email"),
-                        rs.getString("login"),
-                        rs.getString("name"),
-                        rs.getDate("birth_day").toLocalDate(),
-                        new HashSet<>()
-                ),
-                id, friendId
-        );
-    }
 }

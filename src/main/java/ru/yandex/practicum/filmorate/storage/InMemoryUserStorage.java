@@ -2,12 +2,10 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.SelfFriendException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.FriendsShip;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
@@ -16,7 +14,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @Qualifier("inMemoryUserStorage")
-public class InMemoryUserStorage implements UserStorage {
+public class InMemoryUserStorage implements UserStorage, FriendshipStorage {
 
     private final Map<Long, User> users = new HashMap<>();
 

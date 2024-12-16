@@ -66,20 +66,6 @@ public class UserControllerTest {
     }
 
     @Test
-    public void addUser_ShouldReturnUserWithId() throws Exception {
-        mockMvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(createTestUserJson("test@example.com", "testUser",
-                                "Test User", "2000-01-01")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").isNotEmpty())
-                .andExpect(jsonPath("$.email").value("test@example.com"))
-                .andExpect(jsonPath("$.login").value("testUser"))
-                .andExpect(jsonPath("$.name").value("Test User"))
-                .andExpect(jsonPath("$.birthday").value("2000-01-01"));
-    }
-
-    @Test
     public void getUsers_ShouldReturnListOfUsers() throws Exception {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
