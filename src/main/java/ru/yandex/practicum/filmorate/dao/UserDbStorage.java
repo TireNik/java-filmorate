@@ -51,14 +51,14 @@ public class UserDbStorage implements UserStorage {
     @Override
     public Collection<User> getUsers() {
         final String GET_USERS_QUERY = "SELECT * FROM users";
-        return jdbc.query(GET_USERS_QUERY, (rs, rowNum) -> userMapper.mapToUser(rs));
+        return jdbc.query(GET_USERS_QUERY, userMapper::mapToUser);
     }
 
     @Override
     public User getUserById(Long id) {
         final String GET_USER_BY_ID_QUERY = "SELECT * FROM users WHERE user_id = ?";
         try {
-            return jdbc.queryForObject(GET_USER_BY_ID_QUERY, (rs, rowNum) -> userMapper.mapToUser(rs), id);
+            return jdbc.queryForObject(GET_USER_BY_ID_QUERY, userMapper::mapToUser, id);
         } catch (EmptyResultDataAccessException e) {
             log.error("Пользователь с id={} не найден", id);
             throw new RuntimeException("Пользователь с указанным id не найден", e);

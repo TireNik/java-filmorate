@@ -5,11 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dao.Mapper.UserMapper;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 
-import java.util.HashSet;
 import java.util.List;
 
 @Repository
@@ -18,6 +18,7 @@ import java.util.List;
 @Qualifier("friendDbStorage")
 public class FriendDbStorage implements FriendshipStorage {
     private final JdbcTemplate jdbc;
+    private final UserMapper userMapper;
 
     @Override
     public void addFriend(Long userId, Long friendId) {
@@ -96,17 +97,7 @@ public class FriendDbStorage implements FriendshipStorage {
             if (userCount == null || userCount == 0) {
                 throw new UserNotFoundException("Пользователь с ID " + id + " не найден");
             }
-            return jdbc.query(GET_FRIENDS_QUERY,
-                    (rs, rowNum) -> new User(
-                            rs.getLong("user_id"),
-                            rs.getString("email"),
-                            rs.getString("login"),
-                            rs.getString("name"),
-                            rs.getDate("birth_day").toLocalDate(),
-                            new HashSet<>()
-                    ),
-                    id
-            );
+            return jdbc.query(GET_FRIENDS_QUERY, userMapper::mapToUser, id);
         } catch (UserNotFoundException e) {
             log.error("Ошибка: {}", e.getMessage());
             throw e;
@@ -120,16 +111,6 @@ public class FriendDbStorage implements FriendshipStorage {
                         "JOIN friendship f1 ON u.user_id = f1.friend_id " +
                         "JOIN friendship f2 ON u.user_id = f2.friend_id " +
                         "WHERE f1.user_id = ? AND f2.user_id = ?";
-        return jdbc.query(GET_COMMON_FRIENDS_QUERY,
-                (rs, rowNum) -> new User(
-                        rs.getLong("user_id"),
-                        rs.getString("email"),
-                        rs.getString("login"),
-                        rs.getString("name"),
-                        rs.getDate("birth_day").toLocalDate(),
-                        new HashSet<>()
-                ),
-                id, friendId
-        );
+        return jdbc.query(GET_COMMON_FRIENDS_QUERY, userMapper::mapToUser, id, friendId);
     }
 }

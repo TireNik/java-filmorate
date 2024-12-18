@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import ru.yandex.practicum.filmorate.validation.ReleaseDate;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 
 @Data
@@ -31,5 +32,10 @@ public class Film {
 
     Mpa mpa;
     final LinkedHashSet<Genre> genres = new LinkedHashSet<>();
+
+    public void setGenres(Collection<Genre> genres) {
+        this.genres.clear();
+        this.genres.addAll(genres);
+    }
 
 }

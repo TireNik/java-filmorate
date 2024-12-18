@@ -11,7 +11,7 @@ import java.util.HashSet;
 
 @Component
 public class UserMapper {
-    public User mapToUser(ResultSet rs) throws SQLException {
+    public User mapToUser(ResultSet rs, int rowNum) throws SQLException {
         return new User(
                 rs.getLong("user_id"),
                 rs.getString("email"),

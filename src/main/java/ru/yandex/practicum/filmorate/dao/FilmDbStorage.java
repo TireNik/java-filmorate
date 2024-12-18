@@ -18,6 +18,7 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import java.sql.*;
 import java.sql.Date;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -49,20 +50,37 @@ public class FilmDbStorage implements FilmStorage {
                 "FROM film_genres AS fg " +
                 "JOIN genres AS g ON fg.genre_id = g.genre_id " +
                 "WHERE fg.film_id = ?";
-        return new LinkedHashSet<>(jdbc.query(sql, filmMapper::mapToGenres, filmId));
+        return new LinkedHashSet<>(Objects.requireNonNull(jdbc.query(sql, filmMapper::mapToGenres, filmId)));
     }
 
     @Override
     public Collection<Film> getFilms() {
-        String sql = "SELECT f.film_id, f.name, f.description, f.releaseDate, f.duration, r.rating_id, r.name AS rating_name " +
+        String sqlFilms = "SELECT f.film_id, f.name, f.description, f.releaseDate, f.duration, r.rating_id, " +
+                "r.name AS rating_name " +
                 "FROM films AS f " +
                 "LEFT JOIN mpa_rating AS r ON f.rating_id = r.rating_id";
 
-        List<Film> films = jdbc.query(sql, (rs, rowNum) -> {
-            Film film = filmMapper.mapToFilm(rs);
-            film.getGenres().addAll(getGenresByFilmId(film.getId()));
-            return film;
+        String sqlGenres = "SELECT fg.film_id, g.genre_id, g.name " +
+                "FROM film_genres AS fg " +
+                "JOIN genres AS g ON fg.genre_id = g.genre_id";
+
+        List<Film> films = jdbc.query(sqlFilms, (rs, rowNum) -> filmMapper.mapToFilm(rs));
+
+        Map<Long, Set<Genre>> filmGenresMap = jdbc.query(sqlGenres, rs -> {
+            Map<Long, Set<Genre>> map = new HashMap<>();
+            while (rs.next()) {
+                long filmId = rs.getLong("film_id");
+                Genre genre = new Genre(rs.getInt("genre_id"), rs.getString("name"));
+                map.computeIfAbsent(filmId, k -> new HashSet<>()).add(genre);
+            }
+            return map;
         });
+
+        films.forEach(film -> {
+            assert filmGenresMap != null;
+            film.setGenres(filmGenresMap.getOrDefault(film.getId(), Collections.emptySet()));
+        });
+
         return films;
     }
 
@@ -83,7 +101,7 @@ public class FilmDbStorage implements FilmStorage {
                     ps.setInt(5, film.getMpa().getId());
                     return ps;
                 }, keyHolder);
-        film.setId(keyHolder.getKey().longValue());
+        film.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
         addGenresToFilm(film);
         return film;
     }
@@ -158,17 +176,45 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getPopularFilms(int count) {
-        String sql = "SELECT f.film_id, f.name, f.description, f.releaseDate, f.duration, r.rating_id, r.name AS rating_name, COUNT(l.user_id) AS likes " +
+        String sql = "SELECT f.film_id, f.name, f.description, f.releaseDate, f.duration, r.rating_id, " +
+                "r.name AS rating_name, COUNT(l.user_id) AS likes " +
                 "FROM films AS f " +
                 "LEFT JOIN likes AS l ON f.film_id = l.film_id " +
                 "LEFT JOIN mpa_rating AS r ON f.rating_id = r.rating_id " +
                 "GROUP BY f.film_id, r.rating_id, r.name " +
                 "ORDER BY likes DESC " +
                 "LIMIT ?";
-        return jdbc.query(sql, (rs, rowNum) -> {
-            Film film = filmMapper.mapToFilm(rs);
-            film.getGenres().addAll(getGenresByFilmId(film.getId()));
-            return film;
-        }, count);
+        List<Film> films = jdbc.query(sql, (rs, rowNum) -> filmMapper.mapToFilm(rs), count);
+
+        if (films.isEmpty()) {
+            return films;
+        }
+
+        List<Long> filmsIds = films.stream()
+                .map(Film::getId)
+                .collect(Collectors.toList());
+
+        String inSql = filmsIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(", "));
+
+        String genresByFilmsSql = "SELECT fg.film_id, g.genre_id, g.name " +
+                "FROM film_genres AS fg " +
+                "JOIN genres AS g ON fg.genre_id = g.genre_id " +
+                "WHERE fg.film_id IN (" + inSql + ")";
+
+        Map<Long, Set<Genre>> genresByFilmId = jdbc.query(genresByFilmsSql, rs -> {
+            Map<Long, Set<Genre>> genreMap = new HashMap<>();
+            while (rs.next()) {
+                long filmId = rs.getLong("film_id");
+                Genre genre = new Genre(rs.getInt("genre_id"), rs.getString("name"));
+                genreMap.computeIfAbsent(filmId, k -> new LinkedHashSet<>()).add(genre);
+            }
+            return genreMap;
+        });
+
+        films.forEach(film -> film.setGenres(genresByFilmId.getOrDefault(film.getId(), new LinkedHashSet<>())));
+        return films;
     }
+
 }
