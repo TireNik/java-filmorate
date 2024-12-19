@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.SelfFriendException;
@@ -12,7 +13,8 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-public class InMemoryUserStorage implements UserStorage {
+@Qualifier("inMemoryUserStorage")
+public class InMemoryUserStorage implements UserStorage, FriendshipStorage {
 
     private final Map<Long, User> users = new HashMap<>();
 

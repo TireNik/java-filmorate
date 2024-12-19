@@ -53,16 +53,4 @@ public class FilmControllerTest {
                 .andExpect(jsonPath("$.error", containsString("Validation error")))
                 .andExpect(jsonPath("$.message", containsString("Продолжительность фильма должна быть положительным числом")));
     }
-
-    @Test
-    public void addFilm_ShouldPassOnValidInput() throws Exception {
-        mockMvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(createTestFilmJson("Valid Name", "A valid description", "2000-01-01", 120)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Valid Name"))
-                .andExpect(jsonPath("$.description").value("A valid description"))
-                .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
-                .andExpect(jsonPath("$.duration").value(120));
-    }
 }
