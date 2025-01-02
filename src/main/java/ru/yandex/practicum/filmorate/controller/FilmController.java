@@ -21,8 +21,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/films")
-
 @Slf4j
+@Validated
 @RequiredArgsConstructor
 public class FilmController {
 
