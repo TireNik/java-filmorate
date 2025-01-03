@@ -83,8 +83,11 @@ public class ReviewDbStorage implements ReviewStorage {
     }
 
     @Override
-    public void likeToReview(Long id) {
-
+    public void likeToReview(Long reviewId, Long userId) {
+        String sql = "INSERT INTO useful (useful_id, like_id, dislike_id) VALUES (?, ?, NULL)";
+        log.info("Like insert");
+        jdbc.update(sql, reviewId, userId);
+        log.info("Successful insert");
     }
 
     @Override
