@@ -18,7 +18,7 @@ public class ReviewService {
 
 
     public Review addReviews(Review reviews) {
-        log.info("Добавление отзыва с id {}", reviews.getReviewId());
+        log.info("Добавление отзыва");
         try {
             return reviewStorage.addReviews(reviews);
         } catch (Exception e) {
@@ -28,15 +28,34 @@ public class ReviewService {
     }
 
     public Review updateReviews(Review reviews) {
-        return null;
+        try {
+            log.info("Попытка обновить отзыв");
+            return reviewStorage.updateReviews(reviews);
+        } catch (Exception e) {
+            log.info("Ошибка обновления");
+            throw new RuntimeException("Неизвестная ошибка при обновлении");
+        }
     }
 
-    public void deleteReviews(Review reviews) {
-
+    public void deleteReviews(Long id) {
+        try {
+            log.info("Попытка удалить отзыв");
+            reviewStorage.deleteReviews(id);
+            log.info("Отзыв удален");
+        } catch (Exception e) {
+            log.info("Ошибка удаления");
+            throw new RuntimeException("Неизвестная ошибка при удалении");
+        }
     }
 
-    public Review getReviewsById(Review reviews) {
-        return null;
+    public Review getReviewsById(Long id) {
+        try {
+            log.info("Попытка получения отзыва");
+            return reviewStorage.getReviewsById(id);
+        } catch (Exception e) {
+            log.info("Ошибка получения отзыва");
+            throw new RuntimeException("Неизвестная ошибка при получении");
+        }
     }
 
     public List<Review> getReviewsByFilm(Long id) {
