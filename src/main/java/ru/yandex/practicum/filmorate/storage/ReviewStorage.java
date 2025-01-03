@@ -9,9 +9,9 @@ public interface ReviewStorage {
 
     Review updateReviews (Review reviews);
 
-    void deleteReviews (Review reviews);
+    void deleteReviews (Long id);
 
-    Review getReviewsById (Review reviews);
+    Review getReviewsById (Long id);
 
     List<Review> getReviewsByFilm (Long id);
 

@@ -6,6 +6,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dao.Mapper.ReviewMapper;
+import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
@@ -19,6 +21,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class ReviewDbStorage implements ReviewStorage {
     private final JdbcTemplate jdbc;
+    private final ReviewMapper reviewMapper;
 
     @Override
     public Review addReviews(Review reviews) {
@@ -34,27 +37,48 @@ public class ReviewDbStorage implements ReviewStorage {
             ps.setLong(4, reviews.getFilmId());
             return ps;
         }, keyHolder);
-        reviews.builder().reviewId(Objects.requireNonNull(keyHolder.getKey()).longValue());
+        reviews.setReviewId(Objects.requireNonNull(keyHolder.getKey()).longValue());
         return reviews;
     }
 
     @Override
     public Review updateReviews(Review reviews) {
-        return null;
+        String UPDATE_REVIEW_QUERY = "UPDATE reviews SET content = ?, is_positive = ?, film_id = ? " +
+                "WHERE review_id = ?";
+        int update = jdbc.update(UPDATE_REVIEW_QUERY,
+                reviews.getContent(),
+                reviews.getIsPositive(),
+                reviews.getFilmId(),
+                reviews.getReviewId()
+        );
+        if (update == 0) {
+            log.error("Не удалось обновить отзыв с id={}", reviews.getReviewId());
+            throw new ResourceNotFoundException("Отзыв с указанным id не найден");
+        }
+        return reviews;
     }
 
     @Override
-    public void deleteReviews(Review reviews) {
-
+    public void deleteReviews(Long id) {
+        String DELETE_QUERY = "DELETE FROM reviews WHERE review_id = ?";
+        jdbc.update(DELETE_QUERY, id);
     }
 
     @Override
-    public Review getReviewsById(Review reviews) {
-        return null;
+    public Review getReviewsById(Long id) {
+        String QUERY = "SELECT r.content, r.is_positive, u.name AS user_name, f.name AS film_name, " +
+                "(SELECT COUNT(*) FROM useful WHERE useful_id = r.review_id AND like_id IS NOT NULL) AS likes, " +
+                "(SELECT COUNT(*) FROM useful WHERE useful_id = r.review_id AND  dislike_id IS NOT NULL) AS dislikes " +
+                "FROM reviews r " +
+                "JOIN users u ON r.user_id = u.user_id " +
+                "JOIN films f ON r.film_id = f.film_id " +
+                "WHERE r.review_id = ?";
+        return jdbc.queryForObject(QUERY, (rs, rowNum) -> reviewMapper.mapToReview(rs), id);
     }
 
     @Override
     public List<Review> getReviewsByFilm(Long id) {
+
         return List.of();
     }
 
