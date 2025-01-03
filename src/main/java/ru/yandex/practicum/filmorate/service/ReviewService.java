@@ -62,8 +62,15 @@ public class ReviewService {
         return List.of();
     }
 
-    public void likeToReview(Long id) {
-
+    public void likeToReview(Long reviewId, Long userId) {
+        try {
+            log.info("Попытка добавления лайка отзыву {} от {}", reviewId, userId);
+            reviewStorage.likeToReview(reviewId, userId);
+            log.info("Добавили лайк отзыву");
+        } catch (Exception e) {
+            log.info("Ошибка добавления лайка отзыву. Причина {}", e.getMessage());
+            throw new RuntimeException("Неизвестная ошибка при добавления лайка отзыву");
+        }
     }
 
     public void dislikeToReview(Long id) {
