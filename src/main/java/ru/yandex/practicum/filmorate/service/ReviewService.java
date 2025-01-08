@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -53,35 +54,72 @@ public class ReviewService {
             log.info("Попытка получения отзыва");
             return reviewStorage.getReviewsById(id);
         } catch (Exception e) {
-            log.info("Ошибка получения отзыва");
+            log.info("Ошибка получения отзыва по Причине {}", e.getMessage());
             throw new RuntimeException("Неизвестная ошибка при получении");
         }
     }
 
-    public List<Review> getReviewsByFilm(Long id) {
-        return List.of();
+    public Collection<Review> getReviewsByFilm(Long id, int count) {
+        try {
+            log.info("Пытаемся получить отзывы фильма");
+            return reviewStorage.getReviewsByFilm(id, count);
+        } catch (Exception e) {
+            log.info("Ошибка получения отзывов фильма по Причине {}", e.getMessage());
+            throw new RuntimeException("Ошибка получения отзывов фильма");
+        }
+    }
+
+    public Collection<Review> getAllReviews(int count) {
+        try {
+            log.info("Пытаемся получить все отзывы");
+            return reviewStorage.getAllReviews(count);
+        } catch (Exception e) {
+            log.info("Ошибка получения отзывов по Причине {}", e.getMessage());
+            throw new RuntimeException("Ошибка получения всех Отзывов");
+        }
     }
 
     public void likeToReview(Long reviewId, Long userId) {
         try {
-            log.info("Попытка добавления лайка отзыву {} от {}", reviewId, userId);
+            log.info("Попытка добавления лайка отзыву {} от пользователя {}", reviewId, userId);
             reviewStorage.likeToReview(reviewId, userId);
             log.info("Добавили лайк отзыву");
         } catch (Exception e) {
             log.info("Ошибка добавления лайка отзыву. Причина {}", e.getMessage());
-            throw new RuntimeException("Неизвестная ошибка при добавления лайка отзыву");
+            throw new RuntimeException("Неизвестная ошибка при добавление лайка отзыву");
         }
     }
 
-    public void dislikeToReview(Long id) {
-
+    public void dislikeToReview(Long reviewId, Long userId) {
+        try {
+            log.info("Попытка добавления дислайка отзыву {} от пользователя {}", reviewId, userId);
+            reviewStorage.dislikeToReview(reviewId, userId);
+            log.info("Добавили дислайк отзыву");
+        } catch (Exception e) {
+            log.info("Ошибка добавления дислайка отзыву. Причина {}", e.getMessage());
+            throw new RuntimeException("Неизвестная ошибка при добавление дислайка отзыву");
+        }
     }
 
-    public void deleteLike(Long id) {
-
+    public void deleteLike(Long reviewId, Long userId) {
+        try {
+            log.info("Попытка удаления лайка отзыву {} от пользователя {}", reviewId, userId);
+            reviewStorage.deleteLike(reviewId, userId);
+            log.info("Удаление лайка отзыву");
+        } catch (Exception e) {
+            log.info("Ошибка удаления лайка отзыву. Причина {}", e.getMessage());
+            throw new RuntimeException("Неизвестная ошибка при удаление лайка отзыву");
+        }
     }
 
-    public void deleteDislike(Long id) {
-
+    public void deleteDislike(Long reviewId, Long userId) {
+        try {
+            log.info("Попытка удаления дислайка отзыву {} от пользователя {}", reviewId, userId);
+            reviewStorage.deleteDislike(reviewId, userId);
+            log.info("Удаление дислайка отзыву");
+        } catch (Exception e) {
+            log.info("Ошибка удаления дислайка отзыву. Причина {}", e.getMessage());
+            throw new RuntimeException("Неизвестная ошибка при удаление дислайка отзыву");
+        }
     }
 }

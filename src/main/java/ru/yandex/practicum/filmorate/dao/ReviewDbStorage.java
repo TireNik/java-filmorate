@@ -11,8 +11,11 @@ import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
+import javax.swing.tree.RowMapper;
+import java.awt.*;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -60,48 +63,70 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public void deleteReviews(Long id) {
-        String DELETE_QUERY = "DELETE FROM reviews WHERE review_id = ?";
-        jdbc.update(DELETE_QUERY, id);
+        String DELETE_USEFUL_QUERY = "DELETE FROM useful WHERE useful_id = ?";
+        jdbc.update(DELETE_USEFUL_QUERY, id);
+
+        String DELETE_REVIEWS_QUERY = "DELETE FROM reviews WHERE review_id = ?";
+        jdbc.update(DELETE_REVIEWS_QUERY, id);
     }
 
     @Override
     public Review getReviewsById(Long id) {
-        String QUERY = "SELECT r.content, r.is_positive, u.name AS user_name, f.name AS film_name, " +
-                "(SELECT COUNT(*) FROM useful WHERE useful_id = r.review_id AND like_id IS NOT NULL) AS likes, " +
-                "(SELECT COUNT(*) FROM useful WHERE useful_id = r.review_id AND  dislike_id IS NOT NULL) AS dislikes " +
+        String QUERY = "SELECT r.review_id, r.content, r.is_positive, u.name AS user_name, f.name AS film_name, " +
+                "r.user_id, r.film_id, " +
+                "COALESCE(SUM(CASE WHEN uf.like_id IS NOT NULL THEN 1 ELSE 0 END), 0) AS likes, " +
+                "COALESCE(SUM(CASE WHEN uf.dislike_id IS NOT NULL THEN 1 ELSE 0 END), 0) AS dislikes " +
                 "FROM reviews r " +
                 "JOIN users u ON r.user_id = u.user_id " +
                 "JOIN films f ON r.film_id = f.film_id " +
-                "WHERE r.review_id = ?";
+                "LEFT JOIN useful uf ON r.review_id = uf.useful_id " +
+                "WHERE r.review_id = ? " +
+                "GROUP BY r.review_id, r.content, r.is_positive, u.name, f.name, r.user_id, r.film_id";
+
         return jdbc.queryForObject(QUERY, (rs, rowNum) -> reviewMapper.mapToReview(rs), id);
     }
 
     @Override
-    public List<Review> getReviewsByFilm(Long id) {
+    public Collection<Review> getReviewsByFilm(Long id, int count) {
+        String sql = "SELECT * FROM reviews WHERE film_id = ? LIMIT " + count;
+        return jdbc.query(sql, new Object[]{id}, reviewMapper);
+    }
 
-        return List.of();
+    @Override
+    public Collection<Review> getAllReviews(int count) {
+        String sql = "SELECT * FROM reviews LIMIT " + count;
+        return jdbc.query(sql, reviewMapper);
     }
 
     @Override
     public void likeToReview(Long reviewId, Long userId) {
         String sql = "INSERT INTO useful (useful_id, like_id, dislike_id) VALUES (?, ?, NULL)";
-        log.info("Like insert");
+        log.info("Добавление лайка");
         jdbc.update(sql, reviewId, userId);
-        log.info("Successful insert");
+        log.info("Успешное добавление лайка");
     }
 
     @Override
-    public void dislikeToReview(Long id) {
-
+    public void dislikeToReview(Long reviewId, Long userId) {
+        String sql = "INSERT INTO useful (useful_id, like_id, dislike_id) VALUES (?, NULL, ?)";
+        log.info("Добавление дислайка");
+        jdbc.update(sql, reviewId, userId);
+        log.info("Успешное добавление дислайка");
     }
 
     @Override
-    public void deleteLike(Long id) {
-
+    public void deleteLike(Long reviewId, Long userId) {
+        String sql = "DELETE FROM useful WHERE useful_id = ? AND like_id = ?";
+        log.info("Удаление лайка");
+        jdbc.update(sql, reviewId, userId);
+        log.info("Лайк удален");
     }
 
     @Override
-    public void deleteDislike(Long id) {
-
+    public void deleteDislike(Long reviewId, Long userId) {
+        String sql = "DELETE FROM useful WHERE useful_id = ? AND dislike_id = ?";
+        log.info("Удаление дислака");
+        jdbc.update(sql, reviewId, userId);
+        log.info("Дислайк удален");
     }
 }
