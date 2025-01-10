@@ -6,7 +6,6 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
 import java.util.Collection;
-import java.util.List;
 
 @Service
 @Slf4j
