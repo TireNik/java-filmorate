@@ -114,6 +114,7 @@ public class FilmDbStorage implements FilmStorage {
     public Film addFilm(Film film) {
         validateRatingExists(film.getMpa().getId());
         validateGenresExist(film.getGenres());
+        validateDirectorsExist(film.getDirectors());
 
         String sql = "INSERT INTO films (name, description, releaseDate, duration, rating_id) VALUES (?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
