@@ -69,6 +69,11 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
     }
 
     @Override
+    public List<Film> getFilmsByDirector(long directorId, String sortBy) {
+        return Collections.emptyList();
+    }
+
+    @Override
     public Film addFilm(Film film) {
         film.setId(getNextId());
         films.put(film.getId(), film);

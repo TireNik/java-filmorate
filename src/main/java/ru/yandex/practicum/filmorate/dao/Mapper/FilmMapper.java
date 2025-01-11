@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dao.Mapper;
 
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -30,5 +31,14 @@ public class FilmMapper {
             genres.add(genre);
         }
         return genres;
+    }
+
+    public Set<Director> mapToDirectors(ResultSet rs) throws SQLException {
+        Set<Director> directors = new LinkedHashSet<>();
+        while (rs.next()) {
+            Director director = new Director(rs.getLong("director_id"), rs.getString("name"));
+            directors.add(director);
+        }
+        return directors;
     }
 }

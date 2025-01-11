@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -75,5 +75,14 @@ public class FilmController {
     public List<Film> getPopularCommonFilms(@RequestParam Long userId, @RequestParam Long friendId) {
         log.info("Получение общих популярных фильмов друзей c id {} и {}", userId, friendId);
         return filmService.getPopularCommonFilms(userId, friendId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public ResponseEntity<List<Film>> getFilmsByDirector(
+            @PathVariable long directorId,
+            @RequestParam(required = false, defaultValue = "year") String sortBy) {
+        log.info("Получение всех фильмов режиссера, отсортированных по {}", sortBy);
+        List<Film> films = filmService.getFilmsByDirector(directorId, sortBy);
+        return ResponseEntity.ok(films);
     }
 }
