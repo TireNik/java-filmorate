@@ -80,4 +80,10 @@ public class UserController {
         log.info("Получение всех событий пользователя {}", id);
         return userService.getFeed(id);
     }
+
+    @DeleteMapping({"/{id}"})
+    public void deleteUser(@PathVariable Long id) {
+        log.info("Попытка удаления пользователя");
+        userService.deleteUser(id);
+    }
 }

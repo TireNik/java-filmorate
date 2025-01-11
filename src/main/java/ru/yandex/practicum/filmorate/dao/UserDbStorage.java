@@ -61,7 +61,7 @@ public class UserDbStorage implements UserStorage {
             return jdbc.queryForObject(GET_USER_BY_ID_QUERY, userMapper::mapToUser, id);
         } catch (EmptyResultDataAccessException e) {
             log.error("Пользователь с id={} не найден", id);
-            throw new RuntimeException("Пользователь с указанным id не найден", e);
+            throw new UserNotFoundException("Пользователь с указанным id не найден");
         }
     }
 
@@ -82,4 +82,21 @@ public class UserDbStorage implements UserStorage {
         return getUserById(newUser.getId());
     }
 
+    @Override
+    public void deleteUser(Long id) {
+        String deleteFriendshipsSql = "DELETE FROM friendship WHERE user_id = ? OR friend_id = ?";
+        String deleteLikesSql = "DELETE FROM likes WHERE user_id = ?";
+        String deleteReviewsSql = "DELETE FROM reviews WHERE user_id = ?";
+        String deleteUsefulSql = "DELETE FROM useful WHERE like_id = ? OR dislike_id = ?";
+
+        jdbc.update(deleteFriendshipsSql, id, id);
+        jdbc.update(deleteLikesSql, id);
+        jdbc.update(deleteReviewsSql, id);
+        jdbc.update(deleteUsefulSql, id, id);
+
+        String deleteUserSql = "DELETE FROM users WHERE user_id = ?";
+        jdbc.update(deleteUserSql, id);
+
+        log.info("Пользователь с id {} был успешно удален", id);
+    }
 }

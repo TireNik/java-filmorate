@@ -113,4 +113,9 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
 
         return null;
     }
+
+    @Override
+    public void deleteFilm(Long id) {
+
+    }
 }
