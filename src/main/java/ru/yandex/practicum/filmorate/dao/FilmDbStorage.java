@@ -175,17 +175,17 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count,Integer genreId,Integer year) {
-        String insertion ="";
+    public List<Film> getPopularFilms(int count, Integer genreId, Integer year) {
+        String insertion = "";
         if (genreId == null && year != null) {
-            insertion = "WHERE YEAR(f.releaseDate)="+year;
+            insertion = "WHERE YEAR(f.releaseDate)=" + year;
         }
         if (genreId != null && year == null) {
-            insertion ="LEFT JOIN FILM_GENRES AS fg ON fg.FILM_ID = f.FILM_ID WHERE fg.GENRE_ID ="+genreId;
+            insertion = "LEFT JOIN FILM_GENRES AS fg ON fg.FILM_ID = f.FILM_ID WHERE fg.GENRE_ID =" + genreId;
         }
         if (genreId != null && year != null) {
-            insertion ="LEFT JOIN FILM_GENRES AS fg ON fg.FILM_ID = f.FILM_ID WHERE fg.GENRE_ID ="+genreId +
-            " AND YEAR(f.releaseDate)="+year;
+            insertion = "LEFT JOIN FILM_GENRES AS fg ON fg.FILM_ID = f.FILM_ID WHERE fg.GENRE_ID =" + genreId +
+                    " AND YEAR(f.releaseDate)=" + year;
         }
 
         String sql = "SELECT f.film_id, f.name, f.description, f.releaseDate, f.duration, r.rating_id, " +
