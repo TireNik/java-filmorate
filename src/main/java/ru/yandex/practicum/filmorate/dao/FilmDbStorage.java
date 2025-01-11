@@ -36,15 +36,19 @@ public class FilmDbStorage implements FilmStorage {
                 "LEFT JOIN mpa_rating AS r ON f.rating_id = r.rating_id " +
                 "WHERE f.film_id = ?";
 
-        return jdbc.query(sql, rs -> {
-            if (rs.next()) {
-                Film film = filmMapper.mapToFilm(rs);
-                film.getGenres().addAll(getGenresByFilmId(id));
-                film.getDirectors().addAll(getDirectorsByFilmId(id));
-                return film;
-            }
-            return null;
-        }, id);
+        try {
+            log.info("Попытка получение фильма с ID {}", id);
+
+            Film film = jdbc.queryForObject(sql, (rs, rowNum) -> filmMapper.mapToFilm(rs), id);
+            Set<Genre> genres = getGenresByFilmId(id);
+            film.setGenres(genres);
+            Set<Director> directors = getDirectorsByFilmId(id);
+            film.setDirectors(directors);
+            return film;
+        } catch (Exception e) {
+            log.info("Ошибка получения фильма по причине {}", e.getMessage());
+            throw new ResourceNotFoundException("Фильм не найден");
+        }
     }
 
     private Set<Genre> getGenresByFilmId(Long filmId) {

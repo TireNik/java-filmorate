@@ -86,7 +86,7 @@ public class FilmController {
         return ResponseEntity.ok(films);
     }
 
-    @DeleteMapping({"id"})
+    @DeleteMapping("/{id}")
     public void deleteFilm(@PathVariable Long id) {
         log.info("Попытка удаления пользователя");
         filmService.deleteFilm(id);

@@ -81,7 +81,7 @@ public class UserController {
         return userService.getFeed(id);
     }
 
-    @DeleteMapping({"id"})
+    @DeleteMapping({"/{id}"})
     public void deleteUser(@PathVariable Long id) {
         log.info("Попытка удаления пользователя");
         userService.deleteUser(id);

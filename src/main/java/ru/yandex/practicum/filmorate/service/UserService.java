@@ -77,7 +77,7 @@ public class UserService {
         return feedStorage.getFeed(id);
     }
 
-    public void deleteUser (Long id) {
+    public void deleteUser(Long id) {
         try {
             userStorage.deleteUser(id);
         } catch (Exception e) {

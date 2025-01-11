@@ -65,6 +65,11 @@ public class InMemoryUserStorage implements UserStorage, FriendshipStorage {
         return newUser;
     }
 
+    @Override
+    public void deleteUser(Long id) {
+
+    }
+
     private long getNextId() {
         long currentMaxId = users.keySet()
                 .stream()
