@@ -90,4 +90,10 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
                 .orElse(0);
         return ++currentMaxId;
     }
+
+    @Override
+    public List<Film> getPopularCommonFilms(Long userId, Long friendId) {
+
+        return null;
+    }
 }

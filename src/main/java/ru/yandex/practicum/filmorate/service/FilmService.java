@@ -81,4 +81,8 @@ public class FilmService {
         log.info("Возврат топ-{} популярных фильмов", count);
         return filmStorage.getPopularFilms(count);
     }
+
+    public List<Film> getPopularCommonFilms(Long userId, Long friendId) {
+        return filmStorage.getPopularCommonFilms(userId, friendId);
+    }
 }
