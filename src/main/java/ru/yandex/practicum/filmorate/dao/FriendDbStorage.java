@@ -10,6 +10,10 @@ import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Repository
@@ -20,6 +24,10 @@ public class FriendDbStorage implements FriendshipStorage {
     private final JdbcTemplate jdbc;
     private final UserMapper userMapper;
 
+    private final static String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type,operation,entity_id) " +
+            "VALUES(?,?,'FRIEND',?,?)";
+
+
     @Override
     public void addFriend(Long userId, Long friendId) {
         final String CHECK_USER_QUERY = "SELECT COUNT(*) FROM users WHERE user_id = ?";
@@ -28,6 +36,7 @@ public class FriendDbStorage implements FriendshipStorage {
         final String INSERT_QUERY = "INSERT INTO friendship (user_id, friend_id, status) VALUES (?, ?, ?)";
         final String UPDATE_QUERY = "UPDATE friendship SET status = TRUE WHERE user_id = ? AND friend_id = ?";
         final String UPDATE_REVERSE_QUERY = "UPDATE friendship SET status = FALSE WHERE user_id = ? AND friend_id = ?";
+
 
         try {
             Integer userCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, userId);
@@ -53,6 +62,8 @@ public class FriendDbStorage implements FriendshipStorage {
             if (count > 0) {
                 jdbc.update(UPDATE_QUERY, userId, friendId);
                 jdbc.update(UPDATE_REVERSE_QUERY, friendId, userId);
+                jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
+                        userId,"ADD",friendId);
             }
         } catch (UserNotFoundException e) {
             log.error("Ошибка: {}", e.getMessage());
@@ -78,6 +89,8 @@ public class FriendDbStorage implements FriendshipStorage {
                 throw new UserNotFoundException("Пользователь с ID " + friendId + " не найден");
             }
             jdbc.update(DELETE_FRIEND_QUERY, id, friendId);
+            jdbc.update(INSERT_FEED_QUERY,LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
+                    id,"REMOVE",friendId);
         } catch (UserNotFoundException e) {
             log.error("Ошибка: {}", e.getMessage());
             throw e;
