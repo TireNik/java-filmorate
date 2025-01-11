@@ -77,9 +77,9 @@ public class FilmService {
         likeStorage.deleteLike(filmStorage.getFilmById(filmId), userStorage.getUserById(userId));
     }
 
-    public List<Film> getPopularFilms(int count) {
+    public List<Film> getPopularFilms(int count,Integer genreId,Integer year) {
         log.info("Возврат топ-{} популярных фильмов", count);
-        return filmStorage.getPopularFilms(count);
+        return filmStorage.getPopularFilms(count,genreId,year);
     }
 
 
