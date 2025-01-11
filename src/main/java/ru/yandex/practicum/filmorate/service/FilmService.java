@@ -82,11 +82,15 @@ public class FilmService {
         return filmStorage.getPopularFilms(count);
     }
 
+
     public List<Long> getFriendsOfInterest(Long userId) {
         return likeStorage.getFriendsOfInterestDB(userId);
     }
 
     public List<Long> getRecommendedFilms(Long userId, List<Long> friendsOfInterestIds) {
         return likeStorage.getRecommendedFilmsDB(userId, friendsOfInterestIds);
+
+    public List<Film> getPopularCommonFilms(Long userId, Long friendId) {
+        return filmStorage.getPopularCommonFilms(userId, friendId);
     }
 }
