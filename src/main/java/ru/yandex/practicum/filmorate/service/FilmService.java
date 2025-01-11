@@ -90,7 +90,9 @@ public class FilmService {
     public List<Long> getRecommendedFilms(Long userId, List<Long> friendsOfInterestIds) {
         return likeStorage.getRecommendedFilmsDB(userId, friendsOfInterestIds);
     }
+    
     public List<Film> getPopularCommonFilms(Long userId, Long friendId) {
         return filmStorage.getPopularCommonFilms(userId, friendId);
     }
+    
 }
