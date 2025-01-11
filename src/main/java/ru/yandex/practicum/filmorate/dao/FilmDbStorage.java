@@ -40,6 +40,7 @@ public class FilmDbStorage implements FilmStorage {
             if (rs.next()) {
                 Film film = filmMapper.mapToFilm(rs);
                 film.getGenres().addAll(getGenresByFilmId(id));
+                film.getDirectors().addAll(getDirectorsByFilmId(id));
                 return film;
             }
             return null;
