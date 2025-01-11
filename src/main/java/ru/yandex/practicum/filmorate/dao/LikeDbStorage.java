@@ -11,6 +11,9 @@ import ru.yandex.practicum.filmorate.storage.LikeStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,10 +24,16 @@ import java.util.List;
 public class LikeDbStorage implements LikeStorage {
     private final JdbcTemplate jdbc;
 
+    private static final String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type," +
+            "operation,entity_id) " +
+            "VALUES(?,?,'LIKE',?,?)";
+
     @Override
     public void addLike(Film film, User user) {
         String sql = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
         jdbc.update(sql, film.getId(), user.getId());
+        jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
+                user.getId(),"ADD",film.getId());
         log.info("Лайк добавлен фильму с id {} от пользователя с id {}", film.getId(), user.getId());
     }
 
@@ -32,6 +41,8 @@ public class LikeDbStorage implements LikeStorage {
     public void deleteLike(Film film, User user) {
         String sql = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
         jdbc.update(sql, film.getId(), user.getId());
+        jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
+                user.getId(),"REMOVE",film.getId());
         log.info("Лайк удален у фильма с id {} от пользователя с id {}", film.getId(), user.getId());
     }
 

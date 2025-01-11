@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.RecommendationsService;
@@ -72,5 +73,11 @@ public class UserController {
     public List<Film> getRecommendationFilms(@PathVariable Long id) {
         log.info("Получение списка рекомендованных фильмов для пользователя {}", id);
         return recommendationsService.getRecommendationsFilms(id);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<Feed> getFeed(@PathVariable Long id) {
+        log.info("Получение всех событий пользователя {}", id);
+        return userService.getFeed(id);
     }
 }

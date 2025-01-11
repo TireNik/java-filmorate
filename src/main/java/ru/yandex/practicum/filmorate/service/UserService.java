@@ -4,7 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PutMapping;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -16,11 +18,15 @@ import java.util.List;
 public class UserService {
     private final UserStorage userStorage;
     private final FriendshipStorage friendshipStorage;
+    private final FeedStorage feedStorage;
 
     public UserService(@Qualifier("userDbStorage") UserStorage userStorage,
-                       @Qualifier("friendDbStorage") FriendshipStorage friendshipStorage) {
+                       @Qualifier("friendDbStorage") FriendshipStorage friendshipStorage,
+                       @Qualifier("feedDbStorage") FeedStorage feedStorage) {
         this.userStorage = userStorage;
         this.friendshipStorage = friendshipStorage;
+        this.feedStorage = feedStorage;
+
     }
 
     public Collection<User> getUsers() {
@@ -64,5 +70,9 @@ public class UserService {
 
     public List<User> getCommonFriends(Long id, Long friendId) {
         return friendshipStorage.getCommonFriends(id, friendId);
+    }
+
+    public List<Feed> getFeed(Long id) {
+        return feedStorage.getFeed(id);
     }
 }
