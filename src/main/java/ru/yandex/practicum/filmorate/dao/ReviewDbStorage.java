@@ -13,6 +13,9 @@ import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,6 +26,9 @@ import java.util.Objects;
 public class ReviewDbStorage implements ReviewStorage {
     private final JdbcTemplate jdbc;
     private final ReviewMapper reviewMapper;
+
+    private final static String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type,operation,entity_id) " +
+            "VALUES(?,?,'REVIEW',?,?)";
 
     @Override
     public Review addReviews(Review reviews) {
@@ -39,6 +45,8 @@ public class ReviewDbStorage implements ReviewStorage {
             return ps;
         }, keyHolder);
         reviews.setReviewId(Objects.requireNonNull(keyHolder.getKey()).longValue());
+        jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
+                reviews.getUserId(),"ADD",reviews.getReviewId());
         return reviews;
     }
 
@@ -56,16 +64,22 @@ public class ReviewDbStorage implements ReviewStorage {
             log.error("Не удалось обновить отзыв с id={}", reviews.getReviewId());
             throw new ResourceNotFoundException("Отзыв с указанным id не найден");
         }
+        jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
+                reviews.getUserId(),"UPDATE",reviews.getReviewId());
         return getReviewsById(reviews.getReviewId());
     }
 
     @Override
     public void deleteReviews(Long id) {
         final String DELETE_USEFUL_QUERY = "DELETE FROM useful WHERE useful_id = ?";
+        Long userId = getReviewsById(id).getUserId();
         jdbc.update(DELETE_USEFUL_QUERY, id);
 
         final String DELETE_REVIEWS_QUERY = "DELETE FROM reviews WHERE review_id = ?";
+
         jdbc.update(DELETE_REVIEWS_QUERY, id);
+        jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
+                userId,"REMOVE",id);
     }
 
     @Override

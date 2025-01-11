@@ -10,15 +10,17 @@ import java.sql.SQLException;
 public class FeedMapper {
 
     public Feed mapToFeed(ResultSet resultSet) throws SQLException {
-        return Feed.builder()
-                .entityId(resultSet
+        Feed feed = Feed.builder()
+                .eventId(resultSet
                         .getInt("event_id"))
-                .timeEvent(resultSet.getTimestamp("time_event").toInstant().getEpochSecond())
+                .timestamp(resultSet.getTimestamp("time_event").toInstant().getEpochSecond()*1000)
                 .userId(resultSet.getInt("user_id"))
                 .eventType(resultSet.getString("event_type"))
                 .operation(resultSet.getString("operation"))
                 .entityId(resultSet.getInt("entity_id"))
                 .build();
+
+        return feed;
     }
 
 }

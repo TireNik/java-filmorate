@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS useful(
 
 
 CREATE TABLE IF NOT EXISTS feed(
-    event_id INT  GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    event_id INT GENERATED  BY DEFAULT AS IDENTITY PRIMARY KEY,
     time_event timestamp,
     user_id INT,
     event_type VARCHAR(6),
