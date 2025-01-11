@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.Mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -64,6 +65,10 @@ public class FilmDbStorage implements FilmStorage {
                 "FROM film_genres AS fg " +
                 "JOIN genres AS g ON fg.genre_id = g.genre_id";
 
+        String sqlDirectors = "SELECT df.film_id, d.director_id, d.name " +
+                "FROM directors_films AS df " +
+                "JOIN directors AS d ON df.director_id = d.director_id";
+
         List<Film> films = jdbc.query(sqlFilms, (rs, rowNum) -> filmMapper.mapToFilm(rs));
 
         Map<Long, Set<Genre>> filmGenresMap = jdbc.query(sqlGenres, rs -> {
@@ -76,9 +81,21 @@ public class FilmDbStorage implements FilmStorage {
             return map;
         });
 
+        Map<Long, Set<Director>> filmDirectorMap = jdbc.query(sqlDirectors, rs -> {
+            Map<Long, Set<Director>> map = new HashMap<>();
+            while (rs.next()) {
+                long filmId = rs.getLong("film_id");
+                Director director = new Director(rs.getLong("director_id"), rs.getString("name"));
+                map.computeIfAbsent(filmId, k -> new HashSet<>()).add(director);
+            }
+            return map;
+        });
+
         films.forEach(film -> {
             assert filmGenresMap != null;
             film.setGenres(filmGenresMap.getOrDefault(film.getId(), Collections.emptySet()));
+            assert filmDirectorMap != null;
+            film.setDirectors(filmDirectorMap.getOrDefault(film.getId(), Collections.emptySet()));
         });
 
         return films;
