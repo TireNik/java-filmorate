@@ -129,6 +129,7 @@ public class FilmDbStorage implements FilmStorage {
                 }, keyHolder);
         film.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
         addGenresToFilm(film);
+        addDirectorsToFilm(film);
         return film;
     }
 
