@@ -18,11 +18,11 @@ public class FeedDbStorage implements FeedStorage {
     private final JdbcTemplate jdbc;
     private final FeedMapper mapper;
 
-    private static final String GET_FEED_BY_ID_QUERY ="SELECT * FROM feed WHERE user_id = ?";
+    private static final String GET_FEED_BY_ID_QUERY = "SELECT * FROM feed WHERE user_id = ?";
 
 
     @Override
     public List<Feed> getFeed(Long id) {
-            return jdbc.query(GET_FEED_BY_ID_QUERY, (rs, rowNum) -> mapper.mapToFeed(rs),id);
+        return jdbc.query(GET_FEED_BY_ID_QUERY, (rs, rowNum) -> mapper.mapToFeed(rs), id);
     }
 }

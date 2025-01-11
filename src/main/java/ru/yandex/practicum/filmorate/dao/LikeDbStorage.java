@@ -24,7 +24,8 @@ import java.util.List;
 public class LikeDbStorage implements LikeStorage {
     private final JdbcTemplate jdbc;
 
-    private final static String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type,operation,entity_id) " +
+    private static final String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type," +
+            "operation,entity_id) " +
             "VALUES(?,?,'LIKE',?,?)";
 
     @Override

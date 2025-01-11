@@ -57,6 +57,10 @@ public class FilmService {
         return filmStorage.getFilmById(filmId);
     }
 
+    public List<Film> getFilmsByDirector(long directorId, String sortBy) {
+        return filmStorage.getFilmsByDirector(directorId, sortBy);
+    }
+
     public Film addFilm(Film film) {
         try {
             log.info("Добавление фильма: {}", film.getName());

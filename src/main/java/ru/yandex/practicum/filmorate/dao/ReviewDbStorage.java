@@ -27,7 +27,8 @@ public class ReviewDbStorage implements ReviewStorage {
     private final JdbcTemplate jdbc;
     private final ReviewMapper reviewMapper;
 
-    private final static String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type,operation,entity_id) " +
+    private static final  String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type," +
+            "operation,entity_id) " +
             "VALUES(?,?,'REVIEW',?,?)";
 
     @Override

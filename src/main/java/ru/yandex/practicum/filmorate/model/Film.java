@@ -38,4 +38,10 @@ public class Film {
         this.genres.addAll(genres);
     }
 
+    final LinkedHashSet<Director> directors = new LinkedHashSet<>();
+
+    public void setDirectors(Collection<Director> directors) {
+        this.directors.clear();
+        this.directors.addAll(directors);
+    }
 }

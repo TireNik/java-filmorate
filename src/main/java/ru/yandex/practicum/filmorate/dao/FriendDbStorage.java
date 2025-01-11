@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -24,7 +23,8 @@ public class FriendDbStorage implements FriendshipStorage {
     private final JdbcTemplate jdbc;
     private final UserMapper userMapper;
 
-    private final static String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type,operation,entity_id) " +
+    private static final  String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id," +
+            "event_type,operation,entity_id) " +
             "VALUES(?,?,'FRIEND',?,?)";
 
 
@@ -63,7 +63,7 @@ public class FriendDbStorage implements FriendshipStorage {
                 jdbc.update(UPDATE_QUERY, userId, friendId);
                 jdbc.update(UPDATE_REVERSE_QUERY, friendId, userId);
                 jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                        userId,"ADD",friendId);
+                        userId, "ADD", friendId);
             }
         } catch (UserNotFoundException e) {
             log.error("Ошибка: {}", e.getMessage());
@@ -89,8 +89,8 @@ public class FriendDbStorage implements FriendshipStorage {
                 throw new UserNotFoundException("Пользователь с ID " + friendId + " не найден");
             }
             jdbc.update(DELETE_FRIEND_QUERY, id, friendId);
-            jdbc.update(INSERT_FEED_QUERY,LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                    id,"REMOVE",friendId);
+            jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
+                    id, "REMOVE", friendId);
         } catch (UserNotFoundException e) {
             log.error("Ошибка: {}", e.getMessage());
             throw e;
