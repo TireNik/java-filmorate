@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.RecommendationsService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
@@ -19,6 +20,7 @@ import java.util.List;
 public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
+    private final RecommendationsService recommendationsService;
 
     @GetMapping
     public Collection<User> getUsers() {
@@ -51,7 +53,7 @@ public class UserController {
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public List<User> getCommonFriends(@PathVariable Long id,
-                                             @PathVariable Long otherId) {
+                                       @PathVariable Long otherId) {
         log.info("Получаем общих друзей пользователя {}, с пользователем {} ", id, otherId);
         return userService.getCommonFriends(id, otherId);
     }
@@ -69,6 +71,6 @@ public class UserController {
     @GetMapping("{id}/recommendations")
     public List<Film> getRecommendationFilms(@PathVariable Long id) {
         log.info("Получение списка рекомендованных фильмов для пользователя {}", id);
-        return null;
+        return recommendationsService.getRecommendationsFilms(id);
     }
 }
