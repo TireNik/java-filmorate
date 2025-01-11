@@ -1,31 +1,30 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.ReviewService;
 
-import java.util.Collection;
+import java.util.List;
 
 @RestController
-@RequestMapping("/films/reviews")
+@RequestMapping("/reviews")
 @Slf4j
-@Validated
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
     @PostMapping
-    public Review addReviews(@Validated @RequestBody Review reviews) {
+    public Review addReviews(@Valid @RequestBody Review reviews) {
         log.info("Пытаюсь добавить отзыв");
         return reviewService.addReviews(reviews);
     }
 
     @PutMapping
-    public Review updateReview(@Validated @RequestBody Review review) {
+    public Review updateReview(@Valid @RequestBody Review review) {
         log.info("Попытка обновления отзыва");
         return reviewService.updateReviews(review);
     }
@@ -61,8 +60,9 @@ public class ReviewController {
     }
 
     @GetMapping
-    public Collection<Review> getReviewsByFilm(@RequestParam(required = false) Long filmId,
-                                               @RequestParam(defaultValue = "10") int count) {
+    public List<Review> getReviewsByFilm(@RequestParam(required = false) Long filmId,
+                                         @RequestParam(defaultValue = "10") int count) {
+        log.info("Отзывы по фильму получаем?");
         if (filmId != null) {
             return reviewService.getReviewsByFilm(filmId, count);
         } else {

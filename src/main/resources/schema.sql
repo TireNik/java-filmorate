@@ -70,8 +70,8 @@ CREATE TABLE IF NOT EXISTS reviews(
 
 CREATE TABLE IF NOT EXISTS useful(
     useful_id INT NOT NULL,
-    like_id INT NULL,
-    dislike_id INT NULL,
+    like_id INT,
+    dislike_id INT,
     FOREIGN KEY(useful_id) REFERENCES reviews(review_id),
     FOREIGN KEY(like_id) REFERENCES users(user_id),
     FOREIGN KEY(dislike_id) REFERENCES users(user_id)

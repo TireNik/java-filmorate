@@ -9,27 +9,19 @@ import java.sql.SQLException;
 
 @Component
 public class ReviewMapper implements RowMapper<Review> {
-    public Review mapToReview(ResultSet rs) throws SQLException {
-        Integer likeId = rs.getInt("likes");
-        Integer dislikeId = rs.getInt("dislikes");
-        Integer useful = likeId - dislikeId;
+    @Override
+    public Review mapRow(ResultSet rs, int rowNum) throws SQLException{
+        int likes = rs.getInt("likes");
+        int dislikes = rs.getInt("dislikes");
+        int useful = likes - dislikes;
 
         return Review.builder()
+                .reviewId(rs.getLong("review_id"))
                 .content(rs.getString("content"))
                 .isPositive(rs.getBoolean("is_positive"))
                 .userId(rs.getLong("user_id"))
                 .filmId(rs.getLong("film_id"))
                 .useful(useful)
-                .build();
-    }
-
-    @Override
-    public Review mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return Review.builder()
-                .content(rs.getString("content"))
-                .isPositive(rs.getBoolean("is_positive"))
-                .userId(rs.getLong("user_id"))
-                .filmId(rs.getLong("film_id"))
                 .build();
     }
 }

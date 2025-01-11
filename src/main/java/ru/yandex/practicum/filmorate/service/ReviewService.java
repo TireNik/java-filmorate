@@ -2,10 +2,13 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
 import java.util.Collection;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -18,6 +21,12 @@ public class ReviewService {
 
 
     public Review addReviews(Review reviews) {
+        if (reviews.getUserId() == null || reviews.getUserId() <= 0) {
+            throw new UserNotFoundException("User not found");
+        }
+        if (reviews.getFilmId() == null || reviews.getFilmId() <= 0) {
+            throw new ResourceNotFoundException("film not found");
+        }
         log.info("Добавление отзыва");
         try {
             return reviewStorage.addReviews(reviews);
@@ -54,11 +63,11 @@ public class ReviewService {
             return reviewStorage.getReviewsById(id);
         } catch (Exception e) {
             log.info("Ошибка получения отзыва по Причине {}", e.getMessage());
-            throw new RuntimeException("Неизвестная ошибка при получении");
+            throw new ResourceNotFoundException("Неизвестная ошибка при получении");
         }
     }
 
-    public Collection<Review> getReviewsByFilm(Long id, int count) {
+    public List<Review> getReviewsByFilm(Long id, int count) {
         try {
             log.info("Пытаемся получить отзывы фильма");
             return reviewStorage.getReviewsByFilm(id, count);
@@ -68,7 +77,7 @@ public class ReviewService {
         }
     }
 
-    public Collection<Review> getAllReviews(int count) {
+    public List<Review> getAllReviews(int count) {
         try {
             log.info("Пытаемся получить все отзывы");
             return reviewStorage.getAllReviews(count);
