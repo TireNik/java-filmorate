@@ -85,4 +85,10 @@ public class FilmController {
         List<Film> films = filmService.getFilmsByDirector(directorId, sortBy);
         return ResponseEntity.ok(films);
     }
+
+    @DeleteMapping({"id"})
+    public void deleteFilm(@PathVariable Long id) {
+        log.info("Попытка удаления пользователя");
+        filmService.deleteFilm(id);
+    }
 }
