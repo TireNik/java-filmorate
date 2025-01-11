@@ -179,6 +179,32 @@ public class FilmDbStorage implements FilmStorage {
         });
     }
 
+    private void addDirectorsToFilm(Film film) {
+        String delSql = "DELETE FROM directors_films WHERE film_id = ?";
+        LinkedHashSet<Director> directors = film.getDirectors();
+        Long id = film.getId();
+        jdbc.update(delSql, id);
+
+        if (directors == null || directors.isEmpty()) {
+            return;
+        }
+
+        String sql = "INSERT INTO directors_films(film_id, director_id) VALUES(?, ?)";
+        jdbc.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                Director director = (Director) directors.toArray()[i];
+                ps.setLong(1, id);
+                ps.setLong(2, director.getId());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return directors.size();
+            }
+        });
+    }
+
     @Override
     public Film updateFilm(Film film) {
         validateRatingExists(film.getMpa().getId());
