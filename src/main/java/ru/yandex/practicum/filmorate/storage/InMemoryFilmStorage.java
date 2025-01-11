@@ -38,6 +38,18 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
     }
 
     @Override
+    public List<Long> getFriendsOfInterestDB(Long userId) {
+        return null;
+    }
+
+    ;
+
+    @Override
+    public List<Long> getRecommendedFilmsDB(Long userId, List<Long> friendsOfInterestIds) {
+        return null;
+    }
+
+    @Override
     public List<Film> getPopularFilms(int count) {
         log.info("Получение {} популярных фильмов", count);
 
