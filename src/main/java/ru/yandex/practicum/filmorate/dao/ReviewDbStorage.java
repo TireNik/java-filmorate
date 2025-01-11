@@ -13,7 +13,6 @@ import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

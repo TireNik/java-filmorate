@@ -10,7 +10,7 @@ import java.sql.SQLException;
 @Component
 public class ReviewMapper implements RowMapper<Review> {
     @Override
-    public Review mapRow(ResultSet rs, int rowNum) throws SQLException{
+    public Review mapRow(ResultSet rs, int rowNum) throws SQLException {
         int likes = rs.getInt("likes");
         int dislikes = rs.getInt("dislikes");
         int useful = likes - dislikes;
