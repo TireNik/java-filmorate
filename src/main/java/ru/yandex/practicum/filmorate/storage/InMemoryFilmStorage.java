@@ -38,7 +38,7 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count) {
+    public List<Film> getPopularFilms(int count,Integer genreId,Integer year) {
         log.info("Получение {} популярных фильмов", count);
 
         return likes.entrySet().stream()
