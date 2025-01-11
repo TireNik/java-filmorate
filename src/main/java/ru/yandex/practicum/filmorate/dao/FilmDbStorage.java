@@ -154,6 +154,19 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+    private void validateDirectorsExist(Set<Director> directors) {
+        if (directors == null || directors.isEmpty()) {
+            return;
+        }
+        String sql = "SELECT COUNT(*) FROM directors WHERE director_id = ?";
+        for (Director director : directors) {
+            Integer count = jdbc.queryForObject(sql, Integer.class, director.getId());
+            if (count == null || count == 0) {
+                throw new ValidationException("Режиссер с ID " + director.getId() + " не найден.");
+            }
+        }
+    }
+
     private void addGenresToFilm(Film film) {
         String delSql = "DELETE FROM film_genres WHERE film_id = ?";
         LinkedHashSet<Genre> genres = film.getGenres();
