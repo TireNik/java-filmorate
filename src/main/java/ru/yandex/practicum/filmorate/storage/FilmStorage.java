@@ -10,6 +10,8 @@ public interface FilmStorage {
 
     Collection<Film> getFilms();
 
+    List<Film> getFilmsByDirector(long directorId, String sortBy);
+
     Film addFilm(Film film);
 
     Film updateFilm(Film film);
