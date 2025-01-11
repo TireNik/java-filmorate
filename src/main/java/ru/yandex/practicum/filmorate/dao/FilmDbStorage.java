@@ -54,6 +54,14 @@ public class FilmDbStorage implements FilmStorage {
         return new LinkedHashSet<>(Objects.requireNonNull(jdbc.query(sql, filmMapper::mapToGenres, filmId)));
     }
 
+    private Set<Director> getDirectorsByFilmId(Long filmId) {
+        String sql = "SELECT d.director_id, d.name " +
+                "FROM directors_films AS df " +
+                "JOIN directors AS d ON df.director_id = d.director_id " +
+                "WHERE df.film_id = ?";
+        return new LinkedHashSet<>(Objects.requireNonNull(jdbc.query(sql, filmMapper::mapToDirectors, filmId)));
+    }
+
     @Override
     public Collection<Film> getFilms() {
         String sqlFilms = "SELECT f.film_id, f.name, f.description, f.releaseDate, f.duration, r.rating_id, " +
