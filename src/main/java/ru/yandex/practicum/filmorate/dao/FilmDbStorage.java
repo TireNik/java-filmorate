@@ -306,6 +306,10 @@ public class FilmDbStorage implements FilmStorage {
                 "JOIN genres AS g ON fg.genre_id = g.genre_id " +
                 "WHERE fg.film_id IN (" + inSql + ")";
 
+        String directorsByFilmsSql = "SELECT df.film_id, d.director_id, d.name " +
+                "FROM directors_films AS df " +
+                "JOIN directors AS d ON df.director_id = d.director_id " +
+                "WHERE df.film_id IN (" + inSql + ")";
 
         Map<Long, Set<Genre>> genresByFilmId = jdbc.query(genresByFilmsSql, rs -> {
             Map<Long, Set<Genre>> genreMap = new HashMap<>();
@@ -316,9 +320,25 @@ public class FilmDbStorage implements FilmStorage {
             }
             return genreMap;
         });
-        films.forEach(film -> film.setGenres(genresByFilmId.getOrDefault(film.getId(), new LinkedHashSet<>())));
 
+        Map<Long, Set<Director>> directorsByFilmId = jdbc.query(directorsByFilmsSql, rs -> {
+            Map<Long, Set<Director>> directorMap = new HashMap<>();
+            while (rs.next()) {
+                long filmId = rs.getLong("film_id");
+                Director director = new Director(rs.getLong("director_id"), rs.getString("name"));
+                directorMap.computeIfAbsent(filmId, k -> new LinkedHashSet<>()).add(director);
+            }
+            return directorMap;
+        });
+
+        films.forEach(film -> {
+            assert genresByFilmId != null;
+            film.setGenres(genresByFilmId.getOrDefault(film.getId(), new LinkedHashSet<>()));
+        });
+        films.forEach(film -> {
+            assert directorsByFilmId != null;
+            film.setDirectors(directorsByFilmId.getOrDefault(film.getId(), new LinkedHashSet<>()));
+        });
     }
-
 
 }
