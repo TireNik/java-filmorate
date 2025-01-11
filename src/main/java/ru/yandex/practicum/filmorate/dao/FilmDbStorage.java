@@ -111,6 +111,58 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
+    public List<Film> getFilmsByDirector(long directorId, String sortBy) {
+        String sqlFilms = "SELECT f.film_id, f.name, f.description, f.releaseDate, f.duration, r.rating_id, " +
+                "r.name AS rating_name, COUNT(l.user_id) AS likes_count " +
+                "FROM films AS f " +
+                "JOIN directors_films df ON f.film_id = df.film_id " +
+                "LEFT JOIN mpa_rating AS r ON f.rating_id = r.rating_id " +
+                "LEFT JOIN likes l ON f.film_id = l.film_id " +
+                "WHERE df.director_id = ? " +
+                "GROUP BY f.film_id, r.rating_id " +
+                "ORDER BY " + (sortBy.equals("likes") ? "likes_count DESC" : "f.releaseDate");
+
+        String sqlGenres = "SELECT fg.film_id, g.genre_id, g.name " +
+                "FROM film_genres AS fg " +
+                "JOIN genres AS g ON fg.genre_id = g.genre_id";
+
+        String sqlDirectors = "SELECT df.film_id, d.director_id, d.name " +
+                "FROM directors_films AS df " +
+                "JOIN directors AS d ON df.director_id = d.director_id";
+
+        List<Film> films = jdbc.query(sqlFilms, new Object[]{directorId}, (rs, rowNum) -> filmMapper.mapToFilm(rs));
+
+        Map<Long, Set<Genre>> filmGenresMap = jdbc.query(sqlGenres, rs -> {
+            Map<Long, Set<Genre>> map = new HashMap<>();
+            while (rs.next()) {
+                long filmId = rs.getLong("film_id");
+                Genre genre = new Genre(rs.getInt("genre_id"), rs.getString("name"));
+                map.computeIfAbsent(filmId, k -> new HashSet<>()).add(genre);
+            }
+            return map;
+        });
+
+        Map<Long, Set<Director>> filmDirectorMap = jdbc.query(sqlDirectors, rs -> {
+            Map<Long, Set<Director>> map = new HashMap<>();
+            while (rs.next()) {
+                long filmId = rs.getLong("film_id");
+                Director director = new Director(rs.getLong("director_id"), rs.getString("name"));
+                map.computeIfAbsent(filmId, k -> new HashSet<>()).add(director);
+            }
+            return map;
+        });
+
+        films.forEach(film -> {
+            assert filmGenresMap != null;
+            film.setGenres(filmGenresMap.getOrDefault(film.getId(), Collections.emptySet()));
+            assert filmDirectorMap != null;
+            film.setDirectors(filmDirectorMap.getOrDefault(film.getId(), Collections.emptySet()));
+        });
+
+        return films;
+    }
+
+    @Override
     public Film addFilm(Film film) {
         validateRatingExists(film.getMpa().getId());
         validateGenresExist(film.getGenres());
