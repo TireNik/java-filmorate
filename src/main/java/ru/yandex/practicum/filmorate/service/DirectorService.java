@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.DirectorStorage;
 
@@ -28,6 +29,9 @@ public class DirectorService {
     }
 
     public Director addDirector(Director director) {
+        if (director.getName() == null || director.getName().isBlank()) {
+            throw new ValidationException("Нельзя добавить режиссера без имени");
+        }
         log.info("Добавление режиссера: {}", director.getName());
         return directorStorage.addDirector(director);
     }

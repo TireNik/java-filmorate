@@ -42,6 +42,9 @@ public class UserService {
 
     public User addUser(User user) {
         log.info("Добавление пользователя: {}", user);
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
         User saveUser = userStorage.addUser(user);
         log.info("Пользователь добавлен с ID: {}", user.getId());
         return saveUser;
@@ -72,6 +75,7 @@ public class UserService {
     public List<User> getCommonFriends(Long id, Long friendId) {
         return friendshipStorage.getCommonFriends(id, friendId);
     }
+
 
     public List<Feed> getFeed(Long id) {
         return feedStorage.getFeed(id);

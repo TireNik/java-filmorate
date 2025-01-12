@@ -9,6 +9,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.Mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -162,6 +163,9 @@ public class FilmDbStorage implements FilmStorage {
             assert filmDirectorMap != null;
             film.setDirectors(filmDirectorMap.getOrDefault(film.getId(), Collections.emptySet()));
         });
+        if (films.isEmpty()) {
+            throw new NotFoundException("Фильмов с таким режиссером нет");
+        }
 
         return films;
     }
@@ -427,18 +431,22 @@ public class FilmDbStorage implements FilmStorage {
         String deleteFilmSql = "DELETE FROM films WHERE film_id = ?";
         jdbc.update(deleteFilmSql, id);
 
+
         log.info("Фильм с id {} был успешно удален", id);
     }
 
     public List<Film> searchFilmsTitleAndDirector(String queryStr) {
-        String sql = "SELECT f.*, m.name AS rating_name, g.genre_id, g.name AS genre_name, d.director_id, d.name AS director_name " +
-                "FROM films f " +
+        String sql = "SELECT f.*, m.name AS rating_name, g.genre_id, g.name AS genre_name, d.director_id, " +
+                "d.name AS director_name, COUNT(l.USER_ID) AS likes FROM films f " +
                 "JOIN mpa_rating m ON f.rating_id = m.rating_id " +
                 "LEFT JOIN film_genres fg ON f.film_id = fg.film_id " +
                 "LEFT JOIN genres g ON fg.genre_id = g.genre_id " +
                 "LEFT JOIN directors_films df ON f.film_id = df.film_id " +
                 "LEFT JOIN directors d ON df.director_id = d.director_id " +
-                "WHERE LOWER(f.name) LIKE ? OR LOWER(d.name) LIKE ?";
+                "LEFT JOIN LIKES l ON l.film_id = f.film_id " +
+                "WHERE LOWER(f.name) LIKE ? OR LOWER(d.name) LIKE ? " +
+                "GROUP BY f.FILM_ID " +
+                "ORDER BY LIKES DESC";
 
         List<Film> films = jdbc.query(sql, (rs, rowNum) -> {
             Film film = filmMapper.mapToFilm(rs);
@@ -453,15 +461,10 @@ public class FilmDbStorage implements FilmStorage {
             return film;
         }, "%" + queryStr.toLowerCase() + "%", "%" + queryStr.toLowerCase() + "%");
 
-        Map<Long, Film> filmMap = new HashMap<>();
-        for (Film film : films) {
-            filmMap.put(film.getId(), film);
-        }
 
-        List<Film> uniqueFilms = new ArrayList<>(filmMap.values());
         log.debug("Получены все Film по названию и режиссёру {}", queryStr);
 
-        return uniqueFilms;
+        return films;
     }
 
     private void addDirectorToFilm(Film film, Long directorId, String directorName) {

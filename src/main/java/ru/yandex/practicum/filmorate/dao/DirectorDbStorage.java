@@ -80,10 +80,11 @@ public class DirectorDbStorage implements DirectorStorage {
     @Override
     public void deleteDirector(Long directorId) {
         String sql = "DELETE FROM directors WHERE director_id = ?";
-        int rowsAffected = jdbc.update(sql, directorId);
 
-        if (rowsAffected == 0) {
-            throw new ResourceNotFoundException("Режиссер не найден. Ошибка удаления");
-        }
+            int rowsAffected = jdbc.update(sql, directorId);
+            if (rowsAffected == 0) {
+                throw new ResourceNotFoundException("Режиссер не найден. Ошибка удаления");
+            }
+
     }
 }

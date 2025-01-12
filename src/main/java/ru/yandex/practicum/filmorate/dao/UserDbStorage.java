@@ -88,6 +88,7 @@ public class UserDbStorage implements UserStorage {
         String deleteLikesSql = "DELETE FROM likes WHERE user_id = ?";
         String deleteReviewsSql = "DELETE FROM reviews WHERE user_id = ?";
         String deleteUsefulSql = "DELETE FROM useful WHERE like_id = ? OR dislike_id = ?";
+        String deleteFeedSql = "DELETE FROM feed WHERE user_id = ?";
 
         jdbc.update(deleteFriendshipsSql, id, id);
         jdbc.update(deleteLikesSql, id);
@@ -96,6 +97,7 @@ public class UserDbStorage implements UserStorage {
 
         String deleteUserSql = "DELETE FROM users WHERE user_id = ?";
         jdbc.update(deleteUserSql, id);
+        jdbc.update(deleteFeedSql,id);
 
         log.info("Пользователь с id {} был успешно удален", id);
     }

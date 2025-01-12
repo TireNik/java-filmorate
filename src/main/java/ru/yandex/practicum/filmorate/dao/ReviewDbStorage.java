@@ -27,7 +27,7 @@ public class ReviewDbStorage implements ReviewStorage {
     private final JdbcTemplate jdbc;
     private final ReviewMapper reviewMapper;
 
-    private static final  String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type," +
+    private static final String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type," +
             "operation,entity_id) " +
             "VALUES(?,?,'REVIEW',?,?)";
 
@@ -47,18 +47,17 @@ public class ReviewDbStorage implements ReviewStorage {
         }, keyHolder);
         reviews.setReviewId(Objects.requireNonNull(keyHolder.getKey()).longValue());
         jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                reviews.getUserId(),"ADD",reviews.getReviewId());
+                reviews.getUserId(), "ADD", reviews.getReviewId());
         return reviews;
     }
 
     @Override
     public Review updateReviews(Review reviews) {
-        final String UPDATE_REVIEW_QUERY = "UPDATE reviews SET content = ?, is_positive = ?, film_id = ? " +
+        final String UPDATE_REVIEW_QUERY = "UPDATE reviews SET content = ?, is_positive = ? " +
                 "WHERE review_id = ?";
         int update = jdbc.update(UPDATE_REVIEW_QUERY,
                 reviews.getContent(),
                 reviews.getIsPositive(),
-                reviews.getFilmId(),
                 reviews.getReviewId()
         );
         if (update == 0) {
@@ -66,7 +65,8 @@ public class ReviewDbStorage implements ReviewStorage {
             throw new ResourceNotFoundException("Отзыв с указанным id не найден");
         }
         jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                reviews.getUserId(),"UPDATE",reviews.getReviewId());
+                getReviewsById(reviews.getReviewId()).getUserId(), "UPDATE", reviews.getReviewId());
+
         return getReviewsById(reviews.getReviewId());
     }
 
@@ -80,7 +80,8 @@ public class ReviewDbStorage implements ReviewStorage {
 
         jdbc.update(DELETE_REVIEWS_QUERY, id);
         jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                userId,"REMOVE",id);
+                userId, "REMOVE", id);
+
     }
 
     @Override
@@ -114,13 +115,22 @@ public class ReviewDbStorage implements ReviewStorage {
                 "WHERE r.film_id = ? " +
                 "GROUP BY r.review_id, r.content, r.is_positive, u.name, f.name, r.user_id, r.film_id " +
                 "LIMIT ?";
-        return jdbc.query(sql, reviewMapper, id, count);
+        List<Review> reviews = jdbc.query(sql, reviewMapper, id, count);
+        return reviews.stream().sorted((r1, r2) -> r2.getUseful() - r1.getUseful()).toList();
     }
 
     @Override
     public List<Review> getAllReviews(int count) {
-        final String sql = "SELECT * FROM reviews LIMIT ?";
-        return jdbc.query(sql, reviewMapper, count);
+        final String sql = "SELECT r.REVIEW_ID,r.CONTENT,r.IS_POSITIVE,r.USER_ID,r.FILM_ID,COUNT(u.LIKE_ID) AS likes," +
+                "COUNT(u.DISLIKE_ID) AS dislikes FROM REVIEWS r  LEFT JOIN USEFUL u ON u.USEFUL_ID = REVIEW_ID " +
+                "GROUP BY r.REVIEW_ID , r.CONTENT, r.IS_POSITIVE, r.USER_ID, r.FILM_ID LIMIT ?";//"SELECT * FROM REVIEWS r  LEFT JOIN USEFUL u ON u.USEFUL_ID = REVIEW_ID LIMIT ?";
+        try {
+            List<Review> reviews = jdbc.query(sql, reviewMapper, count);
+            return reviews.stream().sorted((r1, r2) -> r2.getUseful() - r1.getUseful()).toList();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
