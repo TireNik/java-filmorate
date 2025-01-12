@@ -33,7 +33,7 @@ public class LikeDbStorage implements LikeStorage {
         String sql = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
         jdbc.update(sql, film.getId(), user.getId());
         jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                user.getId(),"ADD",film.getId());
+                user.getId(), "ADD", film.getId());
         log.info("Лайк добавлен фильму с id {} от пользователя с id {}", film.getId(), user.getId());
     }
 

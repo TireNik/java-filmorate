@@ -49,6 +49,14 @@ public class ErrorHandler {
                 .build();
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFoundException(NotFoundException ex) {
+        return ErrorResponse.builder()
+                .error("Resource not found")
+                .build();
+    }
+
     @ExceptionHandler(ValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidationException(ValidationException ex) {

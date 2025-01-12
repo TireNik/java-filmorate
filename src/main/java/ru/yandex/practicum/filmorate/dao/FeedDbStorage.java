@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.Mapper.FeedMapper;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.storage.FeedStorage;
 
@@ -23,6 +24,10 @@ public class FeedDbStorage implements FeedStorage {
 
     @Override
     public List<Feed> getFeed(Long id) {
-        return jdbc.query(GET_FEED_BY_ID_QUERY, (rs, rowNum) -> mapper.mapToFeed(rs), id);
+        List<Feed> feeds = jdbc.query(GET_FEED_BY_ID_QUERY, (rs, rowNum) -> mapper.mapToFeed(rs), id);
+        if (feeds.isEmpty()) {
+            throw new NotFoundException("У этого пользователя нет событий");
+        }
+        return feeds;
     }
 }

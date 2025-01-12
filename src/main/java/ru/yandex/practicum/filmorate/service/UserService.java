@@ -42,6 +42,9 @@ public class UserService {
 
     public User addUser(User user) {
         log.info("Добавление пользователя: {}", user);
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
         User saveUser = userStorage.addUser(user);
         log.info("Пользователь добавлен с ID: {}", user.getId());
         return saveUser;
