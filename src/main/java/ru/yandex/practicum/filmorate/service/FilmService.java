@@ -54,7 +54,7 @@ public class FilmService {
     }
 
     public Film getFilm(long filmId) {
-            return filmStorage.getFilmById(filmId);
+        return filmStorage.getFilmById(filmId);
     }
 
     public List<Film> getFilmsByDirector(long directorId, String sortBy) {
@@ -114,5 +114,23 @@ public class FilmService {
             log.info("Ошибка удаления фильма {}", e.getMessage());
             throw new ResourceNotFoundException("Фильм не найден");
         }
+    }
+
+    public List<Film> searchFilms(String query, String by) {
+        if (query == null && by == null) {
+            return new ArrayList<>(filmStorage.getPopularFilms(10, null, null));
+        }
+        if (query == null || query.isBlank()) {
+            return Collections.emptyList();
+        }
+        if (by.contains("director") && by.contains("title")) {
+            return filmStorage.searchFilmsTitleAndDirector(query);
+        } else if (by.contains("director")) {
+            return filmStorage.searchFilmsDirector(query);
+        } else if (by.contains("title")) {
+            return filmStorage.searchFilmsTitle(query);
+        }
+        return null;
+
     }
 }

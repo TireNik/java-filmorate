@@ -50,7 +50,7 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count,Integer genreId,Integer year) {
+    public List<Film> getPopularFilms(int count, Integer genreId, Integer year) {
         log.info("Получение {} популярных фильмов", count);
 
         return likes.entrySet().stream()
@@ -97,6 +97,21 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
         log.debug("Фильм обнавлен в хранилище: ID = {}, Name = {}", newFilm.getId(), newFilm.getName());
 
         return newFilm;
+    }
+
+    @Override
+    public List<Film> searchFilmsTitleAndDirector(String queryStr) {
+        return null;
+    }
+
+    @Override
+    public List<Film> searchFilmsTitle(String queryStr) {
+        return null;
+    }
+
+    @Override
+    public List<Film> searchFilmsDirector(String queryStr) {
+        return null;
     }
 
     private long getNextId() {
