@@ -76,6 +76,7 @@ public class UserService {
         return friendshipStorage.getCommonFriends(id, friendId);
     }
 
+
     public List<Feed> getFeed(Long id) {
         return feedStorage.getFeed(id);
     }
