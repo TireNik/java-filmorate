@@ -429,4 +429,135 @@ public class FilmDbStorage implements FilmStorage {
 
         log.info("Фильм с id {} был успешно удален", id);
     }
+
+    public List<Film> searchFilmsTitleAndDirector(String queryStr) {
+        String sql = "SELECT f.*, m.name AS rating_name, g.genre_id, g.name AS genre_name, d.director_id, d.name AS director_name " +
+                "FROM films f " +
+                "JOIN mpa_rating m ON f.rating_id = m.rating_id " +
+                "LEFT JOIN film_genres fg ON f.film_id = fg.film_id " +
+                "LEFT JOIN genres g ON fg.genre_id = g.genre_id " +
+                "LEFT JOIN directors_films df ON f.film_id = df.film_id " +
+                "LEFT JOIN directors d ON df.director_id = d.director_id " +
+                "WHERE LOWER(f.name) LIKE ? OR LOWER(d.name) LIKE ?";
+
+        List<Film> films = jdbc.query(sql, (rs, rowNum) -> {
+            Film film = filmMapper.mapToFilm(rs);
+            Integer genreId = rs.getInt("genre_id");
+            String genreName = rs.getString("genre_name");
+            addGenreToFilm(film, genreId, genreName);
+
+            Long directorId = rs.getLong("director_id");
+            String directorName = rs.getString("director_name");
+            addDirectorToFilm(film, directorId, directorName);
+
+            return film;
+        }, "%" + queryStr.toLowerCase() + "%", "%" + queryStr.toLowerCase() + "%");
+
+        Map<Long, Film> filmMap = new HashMap<>();
+        for (Film film : films) {
+            filmMap.put(film.getId(), film);
+        }
+
+        List<Film> uniqueFilms = new ArrayList<>(filmMap.values());
+        log.debug("Получены все Film по названию и режиссёру {}", queryStr);
+
+        return uniqueFilms;
+    }
+
+    private void addDirectorToFilm(Film film, Long directorId, String directorName) {
+        if (directorName != null) {
+            Director director = new Director(directorId, directorName);
+            film.getDirectors().add(director);
+        }
+    }
+
+    public List<Film> searchFilmsTitle(String queryStr) {
+        String sql = "SELECT f.*, m.name AS rating_name, g.genre_id, g.name AS genre_name\n" +
+                "FROM films f\n" +
+                "JOIN mpa_rating m ON f.rating_id = m.rating_id\n" +
+                "LEFT JOIN film_genres fg ON f.film_id = fg.film_id\n" +
+                "LEFT JOIN genres g ON fg.genre_id = g.genre_id\n" +
+                "WHERE LOWER(f.name) LIKE ?";
+
+        List<Film> films = jdbc.query(sql, (rs, rowNum) -> {
+            Film film = filmMapper.mapToFilm(rs);
+            Integer genreId = rs.getInt("genre_id");
+            String genreName = rs.getString("genre_name");
+            addGenreToFilm(film, genreId, genreName);
+            return film;
+        }, "%" + queryStr.toLowerCase() + "%");
+
+        Map<Long, Film> filmMap = new HashMap<>();
+        for (Film film : films) {
+            filmMap.put(film.getId(), film);
+        }
+
+        List<Film> uniqueFilms = new ArrayList<>(filmMap.values());
+        log.debug("Получены все фильмы по названию {}", queryStr);
+
+        return uniqueFilms;
+    }
+
+
+    private void addGenreToFilm(Film film, Integer genreId, String genreName) {
+        if (genreName != null) {
+            Genre genre = new Genre(genreId, genreName);
+            film.getGenres().add(genre);
+        }
+    }
+
+    public List<Film> searchFilmsDirector(String queryStr) {
+        String sql = "SELECT f.*, m.name AS rating_name, g.genre_id, g.name AS genre_name " +
+                "FROM films f " +
+                "JOIN directors_films df ON df.film_id = f.film_id " +
+                "JOIN directors d ON d.director_id = df.director_id " +
+                "LEFT JOIN mpa_rating m ON f.rating_id = m.rating_id " +
+                "LEFT JOIN film_genres fg ON f.film_id = fg.film_id " +
+                "LEFT JOIN genres g ON fg.genre_id = g.genre_id " +
+                "WHERE LOWER(d.name) LIKE ?";
+
+        List<Film> films = jdbc.query(sql, (rs, rowNum) -> {
+            Film film = filmMapper.mapToFilm(rs);
+            Integer genreId = rs.getInt("genre_id");
+            String genreName = rs.getString("genre_name");
+            addGenreToFilm(film, genreId, genreName);
+            return film;
+        }, "%" + queryStr.toLowerCase() + "%");
+
+        Map<Long, Film> filmMap = new HashMap<>();
+        for (Film film : films) {
+            filmMap.put(film.getId(), film);
+        }
+
+        List<Film> uniqueFilms = new ArrayList<>(filmMap.values());
+
+        for (Film film : uniqueFilms) {
+            addDirectorsForFilm(film);
+        }
+
+        log.debug("Получены все фильмы по имени режиссёра {}", queryStr);
+        return uniqueFilms;
+    }
+
+
+    private void addDirectorsForFilm(Film film) {
+        if (film == null) {
+            return;
+        }
+        List<Director> directors = fetchDirectorsByFilmId(film.getId());
+        film.setDirectors(directors);
+    }
+
+    private List<Director> fetchDirectorsByFilmId(Long filmId) {
+        String sql = "SELECT d.* FROM directors d " +
+                "JOIN directors_films df ON d.director_id = df.director_id " +
+                "WHERE df.film_id = ?";
+
+        return jdbc.query(sql, (rs, rowNum) -> {
+            return new Director(
+                    rs.getLong("director_id"),
+                    rs.getString("name")
+            );
+        }, filmId);
+    }
 }

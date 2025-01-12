@@ -91,4 +91,12 @@ public class FilmController {
         log.info("Попытка удаления пользователя");
         filmService.deleteFilm(id);
     }
+
+
+    @GetMapping(value = "search")
+    public List<Film> searchFilmsTitleDirector(@RequestParam(required = false) String query,
+                                                    @RequestParam(required = false) String by) {
+        log.info("Получение фильмов по называнию {} и режисеру {} .", query, by);
+        return filmService.searchFilms(query, by);
+    }
 }
