@@ -94,7 +94,7 @@ public class FilmController {
 
 
     @GetMapping(value = "search")
-    public List<Film>searchFilmsTitleDirector(@RequestParam(required = false) String query,
+    public List<Film> searchFilmsTitleDirector(@RequestParam(required = false) String query,
                                                     @RequestParam(required = false) String by) {
         log.info("Получение фильмов по называнию {} и режисеру {} .", query, by);
         return filmService.searchFilms(query, by);
