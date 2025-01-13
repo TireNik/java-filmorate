@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.*;
 
 import java.util.*;
@@ -103,6 +104,11 @@ public class FilmService {
     }
 
     public List<Film> getPopularCommonFilms(Long userId, Long friendId) {
+        User user = userStorage.getUserById(userId);
+        User friend = userStorage.getUserById(friendId);
+        if (user == null || friend == null) {
+            throw new IllegalArgumentException("Один или оба пользователя не существуют");
+        }
         return filmStorage.getPopularCommonFilms(userId, friendId);
     }
 
@@ -111,8 +117,8 @@ public class FilmService {
             log.info("Попытка удаления фильма с id {}", id);
             filmStorage.deleteFilm(id);
         } catch (Exception e) {
-            log.info("Ошибка удаления фильма {}", e.getMessage());
-            throw new ResourceNotFoundException("Фильм не найден");
+            log.info("Ошибка удаления фильма с id {}: {}", id, e.getMessage());
+            throw new ResourceNotFoundException("Фильм с id " + id + " не найден");
         }
     }
 
@@ -131,6 +137,6 @@ public class FilmService {
             return filmStorage.searchFilmsTitle(query);
         }
         return null;
-
     }
+
 }
