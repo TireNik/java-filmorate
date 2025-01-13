@@ -75,11 +75,11 @@ public class FriendDbStorage implements FriendshipStorage {
         try {
             Integer userCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, id);
             if (userCount == null || userCount == 0) {
-                throw new UserNotFoundException("Пользователь с ID " + id + "не найден");
+                throw new UserNotFoundException("Пользователь с ID " + id + " не найден");
             }
             Integer friendCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, friendId);
             if (friendCount == null || friendCount == 0) {
-                throw new UserNotFoundException("Пользователь с ID " + friendId + "не найден");
+                throw new UserNotFoundException("Пользователь с ID " + friendId + " не найден");
             }
             jdbc.update(DELETE_FRIEND_QUERY, id, friendId);
             jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
@@ -104,7 +104,7 @@ public class FriendDbStorage implements FriendshipStorage {
         try {
             Integer userCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, id);
             if (userCount == null || userCount == 0) {
-                throw new UserNotFoundException("Пользователь с ID " + id + "не найден");
+                throw new UserNotFoundException("Пользователь с ID " + id + " не найден");
             }
             return jdbc.query(GET_FRIENDS_QUERY, userMapper::mapToUser, id);
         } catch (UserNotFoundException e) {

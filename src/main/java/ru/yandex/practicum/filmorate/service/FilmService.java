@@ -136,7 +136,7 @@ public class FilmService {
         } else if (by.contains("title")) {
             return filmStorage.searchFilmsTitle(query);
         }
-        return null;
+        return Collections.emptyList();
     }
 
 }

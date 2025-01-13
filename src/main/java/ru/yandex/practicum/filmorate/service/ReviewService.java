@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.List;
 
@@ -13,9 +15,11 @@ import java.util.List;
 @Slf4j
 public class ReviewService {
     private final ReviewStorage reviewStorage;
+    private final UserStorage userStorage;
 
-    public ReviewService(ReviewStorage reviewStorage) {
+    public ReviewService(ReviewStorage reviewStorage, UserStorage userStorage) {
         this.reviewStorage = reviewStorage;
+        this.userStorage = userStorage;
     }
 
 
@@ -89,6 +93,9 @@ public class ReviewService {
     public void likeToReview(Long reviewId, Long userId) {
         try {
             log.info("Попытка добавления лайка отзыву {} от пользователя {}", reviewId, userId);
+
+            checkUserExists(userId);
+
             reviewStorage.likeToReview(reviewId, userId);
             log.info("Добавили лайк отзыву");
         } catch (Exception e) {
@@ -100,6 +107,9 @@ public class ReviewService {
     public void dislikeToReview(Long reviewId, Long userId) {
         try {
             log.info("Попытка добавления дислайка отзыву {} от пользователя {}", reviewId, userId);
+
+            checkUserExists(userId);
+
             reviewStorage.dislikeToReview(reviewId, userId);
             log.info("Добавили дислайк отзыву");
         } catch (Exception e) {
@@ -111,6 +121,9 @@ public class ReviewService {
     public void deleteLike(Long reviewId, Long userId) {
         try {
             log.info("Попытка удаления лайка отзыву {} от пользователя {}", reviewId, userId);
+
+            checkUserExists(userId);
+
             reviewStorage.deleteLike(reviewId, userId);
             log.info("Удаление лайка отзыву");
         } catch (Exception e) {
@@ -122,11 +135,23 @@ public class ReviewService {
     public void deleteDislike(Long reviewId, Long userId) {
         try {
             log.info("Попытка удаления дислайка отзыву {} от пользователя {}", reviewId, userId);
+
+            checkUserExists(userId);
+
             reviewStorage.deleteDislike(reviewId, userId);
             log.info("Удаление дислайка отзыву");
         } catch (Exception e) {
             log.info("Ошибка удаления дислайка отзыву. Причина {}", e.getMessage());
             throw new RuntimeException("Неизвестная ошибка при удаление дислайка отзыву");
+        }
+    }
+
+    public void checkUserExists(Long userId) {
+        User user = userStorage.getUserById(userId);
+
+        if (user == null) {
+            log.info("Пользователь с ID {} не существует", userId);
+            throw new UserNotFoundException("User not found");
         }
     }
 }
