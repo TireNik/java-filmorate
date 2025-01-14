@@ -1,11 +1,15 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -16,28 +20,43 @@ import java.util.List;
 public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserStorage userStorage;
+    private final FilmStorage filmStorage;
 
-    public ReviewService(ReviewStorage reviewStorage, UserStorage userStorage) {
+    public ReviewService(ReviewStorage reviewStorage, UserStorage userStorage,
+                         @Qualifier("filmDbStorage") FilmStorage filmStorage) {
         this.reviewStorage = reviewStorage;
         this.userStorage = userStorage;
+        this.filmStorage = filmStorage;
     }
 
-
     public Review addReviews(Review reviews) {
-        if (reviews.getUserId() == null || reviews.getUserId() <= 0) {
-            throw new UserNotFoundException("User not found");
+        Long userId = reviews.getUserId();
+        if (userId == null || userId <= 0) {
+            throw new ResourceNotFoundException("Некорректный ID пользователя: " + userId);
         }
-        if (reviews.getFilmId() == null || reviews.getFilmId() <= 0) {
-            throw new ResourceNotFoundException("film not found");
+        User user = userStorage.getUserById(userId);
+        if (user == null) {
+            throw new ResourceNotFoundException("Пользователь с ID " + userId + " не найден");
         }
+
+        Long filmId = reviews.getFilmId();
+        if (filmId == null || filmId <= 0) {
+            throw new ResourceNotFoundException("Некорректный ID фильма: " + filmId);
+        }
+        Film film = filmStorage.getFilmById(filmId);
+        if (film == null) {
+            throw new ResourceNotFoundException("Фильм с ID " + filmId + " не найден");
+        }
+
         log.info("Добавление отзыва");
         try {
             return reviewStorage.addReviews(reviews);
         } catch (Exception e) {
-            log.error("Неизвестная ошибка при добавлении пользователя: ", e);
-            throw new RuntimeException("Неизвестная ошибка при добавлении пользователя", e);
+            log.error("Неизвестная ошибка при добавлении отзыва: ", e);
+            throw new RuntimeException("Неизвестная ошибка при добавлении отзыва", e);
         }
     }
+
 
     public Review updateReviews(Review reviews) {
         try {
