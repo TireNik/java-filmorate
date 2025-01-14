@@ -38,7 +38,17 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count) {
+    public List<Long> getFriendsOfInterestDB(Long userId) {
+        return null;
+    }
+
+    @Override
+    public List<Long> getRecommendedFilmsDB(Long userId, List<Long> friendsOfInterestIds) {
+        return null;
+    }
+
+    @Override
+    public List<Film> getPopularFilms(int count, Integer genreId, Integer year) {
         log.info("Получение {} популярных фильмов", count);
 
         return likes.entrySet().stream()
@@ -54,6 +64,16 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
             throw new ResourceNotFoundException("Фильм с данным id не найден");
         }
         return films.get(id);
+    }
+
+    @Override
+    public List<Film> getFilmsByIds(List<Long> ids) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<Film> getFilmsByDirector(long directorId, String sortBy) {
+        return Collections.emptyList();
     }
 
     @Override
@@ -82,6 +102,21 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
         return newFilm;
     }
 
+    @Override
+    public List<Film> searchFilmsTitleAndDirector(String queryStr) {
+        return null;
+    }
+
+    @Override
+    public List<Film> searchFilmsTitle(String queryStr) {
+        return null;
+    }
+
+    @Override
+    public List<Film> searchFilmsDirector(String queryStr) {
+        return null;
+    }
+
     private long getNextId() {
         long currentMaxId = films.keySet()
                 .stream()
@@ -89,5 +124,15 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
                 .max()
                 .orElse(0);
         return ++currentMaxId;
+    }
+
+    @Override
+    public List<Film> getPopularCommonFilms(Long userId, Long friendId) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void deleteFilm(Long id) {
+
     }
 }

@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.dao;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -20,6 +21,7 @@ import java.util.Collection;
 
 @Repository
 @Slf4j
+@Primary
 @Qualifier("userDbStorage")
 @RequiredArgsConstructor
 public class UserDbStorage implements UserStorage {
@@ -61,7 +63,7 @@ public class UserDbStorage implements UserStorage {
             return jdbc.queryForObject(GET_USER_BY_ID_QUERY, userMapper::mapToUser, id);
         } catch (EmptyResultDataAccessException e) {
             log.error("Пользователь с id={} не найден", id);
-            throw new RuntimeException("Пользователь с указанным id не найден", e);
+            throw new UserNotFoundException("Пользователь с указанным id не найден");
         }
     }
 
@@ -82,4 +84,23 @@ public class UserDbStorage implements UserStorage {
         return getUserById(newUser.getId());
     }
 
+    @Override
+    public void deleteUser(Long id) {
+        String deleteFriendshipsSql = "DELETE FROM friendship WHERE user_id = ? OR friend_id = ?";
+        String deleteLikesSql = "DELETE FROM likes WHERE user_id = ?";
+        String deleteReviewsSql = "DELETE FROM reviews WHERE user_id = ?";
+        String deleteUsefulSql = "DELETE FROM useful WHERE like_id = ? OR dislike_id = ?";
+        String deleteFeedSql = "DELETE FROM feed WHERE user_id = ?";
+
+        jdbc.update(deleteFriendshipsSql, id, id);
+        jdbc.update(deleteLikesSql, id);
+        jdbc.update(deleteReviewsSql, id);
+        jdbc.update(deleteUsefulSql, id, id);
+
+        String deleteUserSql = "DELETE FROM users WHERE user_id = ?";
+        jdbc.update(deleteUserSql, id);
+        jdbc.update(deleteFeedSql,id);
+
+        log.info("Пользователь с id {} был успешно удален", id);
+    }
 }

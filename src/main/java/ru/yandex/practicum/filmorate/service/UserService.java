@@ -4,7 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PutMapping;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -16,11 +20,15 @@ import java.util.List;
 public class UserService {
     private final UserStorage userStorage;
     private final FriendshipStorage friendshipStorage;
+    private final FeedStorage feedStorage;
 
     public UserService(@Qualifier("userDbStorage") UserStorage userStorage,
-                       @Qualifier("friendDbStorage") FriendshipStorage friendshipStorage) {
+                       @Qualifier("friendDbStorage") FriendshipStorage friendshipStorage,
+                       @Qualifier("feedDbStorage") FeedStorage feedStorage) {
         this.userStorage = userStorage;
         this.friendshipStorage = friendshipStorage;
+        this.feedStorage = feedStorage;
+
     }
 
     public Collection<User> getUsers() {
@@ -35,6 +43,9 @@ public class UserService {
 
     public User addUser(User user) {
         log.info("Добавление пользователя: {}", user);
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
         User saveUser = userStorage.addUser(user);
         log.info("Пользователь добавлен с ID: {}", user.getId());
         return saveUser;
@@ -64,5 +75,23 @@ public class UserService {
 
     public List<User> getCommonFriends(Long id, Long friendId) {
         return friendshipStorage.getCommonFriends(id, friendId);
+    }
+
+
+    public List<Feed> getFeed(Long id) {
+        try {
+            return feedStorage.getFeed(id);
+        } catch (NotFoundException e) {
+            throw new UserNotFoundException("Пользователь с ID " + id + " не найден");
+        }
+    }
+
+    public void deleteUser(Long id) {
+        try {
+            userStorage.deleteUser(id);
+        } catch (Exception e) {
+            log.info("Ошибка удаления пользователя {}", e.getMessage());
+            throw new UserNotFoundException("Пользователь с ID" + id + " не найден");
+        }
     }
 }
