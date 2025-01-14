@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.Mapper.UserMapper;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 
 import java.time.Instant;
@@ -25,10 +27,9 @@ public class FriendDbStorage implements FriendshipStorage {
 
     private static final  String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id," +
             "event_type,operation,entity_id) " +
-            "VALUES(?,?,'FRIEND',?,?)";
+            "VALUES(?,?,?,?,?)";
 
 
-    @Override
     public void addFriend(Long userId, Long friendId) {
         final String CHECK_USER_QUERY = "SELECT COUNT(*) FROM users WHERE user_id = ?";
         final String CHECK_QUERY = "SELECT COUNT(*) FROM friendship WHERE (user_id = ? AND friend_id = ?) " +
@@ -36,34 +37,26 @@ public class FriendDbStorage implements FriendshipStorage {
         final String INSERT_QUERY = "INSERT INTO friendship (user_id, friend_id, status) VALUES (?, ?, ?)";
         final String UPDATE_QUERY = "UPDATE friendship SET status = TRUE WHERE user_id = ? AND friend_id = ?";
         final String UPDATE_REVERSE_QUERY = "UPDATE friendship SET status = FALSE WHERE user_id = ? AND friend_id = ?";
-
-
         try {
             Integer userCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, userId);
             if (userCount == null || userCount == 0) {
                 throw new UserNotFoundException("Пользователь с ID " + userId + " не найден");
             }
-
             Integer friendCount = jdbc.queryForObject(CHECK_USER_QUERY, Integer.class, friendId);
             if (friendCount == null || friendCount == 0) {
                 throw new UserNotFoundException("Пользователь с ID " + friendId + " не найден");
             }
-
             int count = jdbc.queryForObject(CHECK_QUERY, Integer.class, userId, friendId, friendId, userId);
-
             if (count > 0) {
                 return;
             }
-
             jdbc.update(INSERT_QUERY, userId, friendId, false);
-
             count = jdbc.queryForObject(CHECK_QUERY, Integer.class, friendId, userId, userId, friendId);
-
             if (count > 0) {
                 jdbc.update(UPDATE_QUERY, userId, friendId);
                 jdbc.update(UPDATE_REVERSE_QUERY, friendId, userId);
                 jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                        userId, "ADD", friendId);
+                        userId, EventType.FRIEND.name(), Operation.ADD.name(), friendId);
             }
         } catch (UserNotFoundException e) {
             log.error("Ошибка: {}", e.getMessage());
@@ -90,10 +83,13 @@ public class FriendDbStorage implements FriendshipStorage {
             }
             jdbc.update(DELETE_FRIEND_QUERY, id, friendId);
             jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                    id, "REMOVE", friendId);
+                    id, EventType.FRIEND.name(), Operation.REMOVE.name(), friendId);
         } catch (UserNotFoundException e) {
             log.error("Ошибка: {}", e.getMessage());
             throw e;
+        } catch (Exception e) {
+            log.error("Ошибка при удалении друга: userId={}, friendId={}", id, friendId, e);
+            throw new RuntimeException("Ошибка при удалении друга", e);
         }
     }
 
@@ -114,6 +110,9 @@ public class FriendDbStorage implements FriendshipStorage {
         } catch (UserNotFoundException e) {
             log.error("Ошибка: {}", e.getMessage());
             throw e;
+        } catch (Exception e) {
+            log.error("Ошибка при получении списка друзей: userId={}", id, e);
+            throw new RuntimeException("Ошибка при получении списка друзей", e);
         }
     }
 

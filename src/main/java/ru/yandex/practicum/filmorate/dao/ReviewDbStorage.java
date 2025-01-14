@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.Mapper.ReviewMapper;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
 import java.sql.PreparedStatement;
@@ -29,7 +31,7 @@ public class ReviewDbStorage implements ReviewStorage {
 
     private static final String INSERT_FEED_QUERY = "INSERT INTO feed (time_event,user_id,event_type," +
             "operation,entity_id) " +
-            "VALUES(?,?,'REVIEW',?,?)";
+            "VALUES(?,?,?,?,?)";
 
     @Override
     public Review addReviews(Review reviews) {
@@ -47,7 +49,7 @@ public class ReviewDbStorage implements ReviewStorage {
         }, keyHolder);
         reviews.setReviewId(Objects.requireNonNull(keyHolder.getKey()).longValue());
         jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                reviews.getUserId(), "ADD", reviews.getReviewId());
+                reviews.getUserId(), EventType.REVIEW.name(), Operation.ADD.name(), reviews.getReviewId());
         return reviews;
     }
 
@@ -65,7 +67,7 @@ public class ReviewDbStorage implements ReviewStorage {
             throw new ResourceNotFoundException("Отзыв с указанным id не найден");
         }
         jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                getReviewsById(reviews.getReviewId()).getUserId(), "UPDATE", reviews.getReviewId());
+                getReviewsById(reviews.getReviewId()).getUserId(), EventType.REVIEW.name(), Operation.UPDATE.name(), reviews.getReviewId());
 
         return getReviewsById(reviews.getReviewId());
     }
@@ -80,8 +82,7 @@ public class ReviewDbStorage implements ReviewStorage {
 
         jdbc.update(DELETE_REVIEWS_QUERY, id);
         jdbc.update(INSERT_FEED_QUERY, LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC),
-                userId, "REMOVE", id);
-
+                userId, EventType.REVIEW.name(), Operation.REMOVE.name(), id);
     }
 
     @Override
@@ -121,9 +122,10 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public List<Review> getAllReviews(int count) {
-        final String sql = "SELECT r.REVIEW_ID,r.CONTENT,r.IS_POSITIVE,r.USER_ID,r.FILM_ID,COUNT(u.LIKE_ID) AS likes," +
-                "COUNT(u.DISLIKE_ID) AS dislikes FROM REVIEWS r  LEFT JOIN USEFUL u ON u.USEFUL_ID = REVIEW_ID " +
-                "GROUP BY r.REVIEW_ID , r.CONTENT, r.IS_POSITIVE, r.USER_ID, r.FILM_ID LIMIT ?";//"SELECT * FROM REVIEWS r  LEFT JOIN USEFUL u ON u.USEFUL_ID = REVIEW_ID LIMIT ?";
+        final String sql = "SELECT r.REVIEW_ID, r.CONTENT, r.IS_POSITIVE, r.USER_ID, r.FILM_ID, " +
+                "COUNT(u.LIKE_ID) AS likes, COUNT(u.DISLIKE_ID) AS dislikes " +
+                "FROM REVIEWS r LEFT JOIN USEFUL u ON u.USEFUL_ID = r.REVIEW_ID " +
+                "GROUP BY r.REVIEW_ID, r.CONTENT, r.IS_POSITIVE, r.USER_ID, r.FILM_ID LIMIT ?";
         try {
             List<Review> reviews = jdbc.query(sql, reviewMapper, count);
             return reviews.stream().sorted((r1, r2) -> r2.getUseful() - r1.getUseful()).toList();
