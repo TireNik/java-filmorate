@@ -34,10 +34,9 @@ public class RecommendationsService {
         }
 
         List<Long> recommendedFilms = filmService.getRecommendedFilms(userId, friendsOfInterestIds);
-        List<Film> films = new ArrayList<>();
-        for (Long id : recommendedFilms) {
-            films.add(filmService.getFilm(id));
-        }
+
+        List<Film> films = filmService.getFilmsByIds(recommendedFilms);
+
         log.debug("Получаем список рекомендованных фильмов для пользователя {}", userId);
         return films;
     }

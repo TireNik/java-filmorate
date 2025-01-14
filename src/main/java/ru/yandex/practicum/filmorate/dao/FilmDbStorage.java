@@ -52,6 +52,30 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+    public List<Film> getFilmsByIds(List<Long> ids) {
+        final String sql = "SELECT f.film_id, f.name, f.description, f.releaseDate, f.duration, " +
+                "r.rating_id, r.name AS rating_name " +
+                "FROM films AS f " +
+                "LEFT JOIN mpa_rating AS r ON f.rating_id = r.rating_id " +
+                "WHERE f.film_id IN (" + ids.stream().map(String::valueOf).collect(Collectors.joining(",")) + ")";
+
+        try {
+            log.info("Попытка получения фильмов с ID {}", ids);
+
+            List<Film> films = jdbc.query(sql, (rs, rowNum) -> filmMapper.mapToFilm(rs));
+            for (Film film : films) {
+                Set<Genre> genres = getGenresByFilmId(film.getId());
+                film.setGenres(genres);
+                Set<Director> directors = getDirectorsByFilmId(film.getId());
+                film.setDirectors(directors);
+            }
+            return films;
+        } catch (Exception e) {
+            log.info("Ошибка получения фильмов по причине {}", e.getMessage());
+            throw new ResourceNotFoundException("Фильмы не найдены");
+        }
+    }
+
     private Set<Genre> getGenresByFilmId(Long filmId) {
         String sql = "SELECT g.genre_id, g.name " +
                 "FROM film_genres AS fg " +

@@ -42,8 +42,6 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
         return null;
     }
 
-    ;
-
     @Override
     public List<Long> getRecommendedFilmsDB(Long userId, List<Long> friendsOfInterestIds) {
         return null;
@@ -66,6 +64,11 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
             throw new ResourceNotFoundException("Фильм с данным id не найден");
         }
         return films.get(id);
+    }
+
+    @Override
+    public List<Film> getFilmsByIds(List<Long> ids) {
+        return Collections.emptyList();
     }
 
     @Override
@@ -125,8 +128,7 @@ public class InMemoryFilmStorage implements FilmStorage, LikeStorage {
 
     @Override
     public List<Film> getPopularCommonFilms(Long userId, Long friendId) {
-
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
